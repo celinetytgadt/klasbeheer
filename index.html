@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leerkracht Portaal</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #f5f5f5; color: #1a1a1a; }
+  header { background: #1e3a5f; color: white; padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem; }
+  header h1 { font-size: 1.2rem; font-weight: 500; }
+  nav { display: flex; gap: 0; border-bottom: 1px solid #ddd; background: white; padding: 0 2rem; }
+  nav button { padding: 0.75rem 1.25rem; border: none; background: none; cursor: pointer; font-size: 0.9rem; color: #555; border-bottom: 3px solid transparent; }
+  nav button.active { color: #1e3a5f; border-bottom-color: #1e3a5f; font-weight: 500; }
+  main { padding: 1.5rem 2rem; max-width: 1100px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  h2 { font-size: 1.1rem; font-weight: 500; margin-bottom: 1rem; color: #1e3a5f; }
+  .card { background: white; border-radius: 8px; border: 0.5px solid #ddd; padding: 1.25rem; margin-bottom: 1rem; }
+  .row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  select, input[type=date], input[type=text] { padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+  button.btn { padding: 0.4rem 1rem; border: 1px solid #1e3a5f; border-radius: 6px; background: #1e3a5f; color: white; cursor: pointer; font-size: 0.9rem; }
+  button.btn-outline { background: white; color: #1e3a5f; }
+  button.btn-small { padding: 0.25rem 0.6rem; font-size: 0.8rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th { text-align: left; padding: 0.5rem 0.75rem; background: #f0f4fa; color: #444; font-weight: 500; border-bottom: 1px solid #ddd; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 0.5px solid #eee; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 500; }
+  .badge-green { background: #eaf3de; color: #3b6d11; }
+  .badge-red { background: #fcebeb; color: #a32d2d; }
+  .badge-amber { background: #faeeda; color: #854f0b; }
+  .badge-gray { background: #f1efe8; color: #5f5e5a; }
+  .aanw-btn { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #ddd; background: white; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .aanw-btn.aanwezig { background: #eaf3de; border-color: #639922; }
+  .aanw-btn.afwezig { background: #fcebeb; border-color: #e24b4a; }
+  .aanw-btn.te-laat { background: #faeeda; border-color: #ef9f27; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .stat { background: #f0f4fa; border-radius: 8px; padding: 0.75rem 1rem; }
+  .stat-label { font-size: 0.78rem; color: #666; margin-bottom: 4px; }
+  .stat-value { font-size: 1.4rem; font-weight: 500; color: #1e3a5f; }
+  .info-bar { background: #e6f1fb; border-left: 3px solid #378add; padding: 0.75rem 1rem; border-radius: 0 6px 6px 0; font-size: 0.88rem; color: #0c447c; margin-bottom: 1rem; }
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: white; border-radius: 10px; padding: 1.5rem; width: 420px; max-width: 95vw; }
+  .modal h3 { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; }
+  .modal-footer { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+  .form-group { margin-bottom: 0.75rem; }
+  .form-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 4px; }
+  .form-group input, .form-group select { width: 100%; }
+  #google-btn { background: white; color: #333; border: 1px solid #ccc; display: flex; align-items: center; gap: 8px; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+  .leerling-tag { display: inline-flex; align-items: center; gap: 4px; background: #f0f4fa; border-radius: 12px; padding: 2px 8px; font-size: 0.82rem; margin: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="width:36px;height:36px;background:#fff3;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📚</div>
+  <h1>Leerkracht Portaal</h1>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:0.75rem;">
+    <span id="header-klas" style="font-size:0.85rem;opacity:0.8;"></span>
+    <button onclick="openKlasModal()" style="background:#fff2;border:1px solid #fff5;color:white;padding:0.3rem 0.75rem;border-radius:6px;cursor:pointer;font-size:0.85rem;">⚙ Klassen beheren</button>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('aanwezigheid', this)">📋 Aanwezigheid</button>
+  <button onclick="showTab('taken', this)">📦 Taken</button>
+  <button onclick="showTab('overzicht', this)">📊 Overzicht</button>
+  <button onclick="showTab('instellingen', this)">⚙ Instellingen</button>
+</nav>
+
+<main>
+
+<!-- AANWEZIGHEID TAB -->
+<div id="tab-aanwezigheid" class="section active">
+  <div class="row">
+    <select id="klas-aanw" onchange="laadAanwezigheid()"></select>
+    <input type="date" id="datum-aanw" onchange="laadAanwezigheid()">
+    <span style="font-size:0.85rem;color:#888;">of</span>
+    <select id="les-aanw" onchange="laadAanwezigheid()">
+      <option value="">-- kies les --</option>
+    </select>
+    <button class="btn btn-small" onclick="slaAanwezigheidOp()">💾 Opslaan</button>
+  </div>
+
+  <div class="stats" id="aanw-stats" style="display:none">
+    <div class="stat"><div class="stat-label">Aanwezig</div><div class="stat-value" id="stat-aanwezig">0</div></div>
+    <div class="stat"><div class="stat-label">Afwezig</div><div class="stat-value" id="stat-afwezig">0</div></div>
+    <div class="stat"><div class="stat-label">Te laat</div><div class="stat-value" id="stat-telaat">0</div></div>
+    <div class="stat"><div class="stat-label">Niet ingegeven</div><div class="stat-value" id="stat-leeg">0</div></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;font-size:0.85rem;color:#666;">
+      <span>Legende:</span>
+      <span><span class="aanw-btn aanwezig" style="width:24px;height:24px;font-size:0.75rem;display:inline-flex;align-items:center;justify-content:center;">✓</span> Aanwezig</span>
+      <span><span class="aanw-btn afwezig" style="width:24px;height:24px;font-size:0.75rem;display:inline-flex;align-items:center;justify-content:center;">✕</span> Afwezig</span>
+      <span><span class="aanw-btn te-laat" style="width:24px;height:24px;font-size:0.75rem;display:inline-flex;align-items:center;justify-content:center;">⏱</span> Te laat</span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Naam</th><th>Aanwezigheid</th><th>Opmerking</th></tr></thead>
+      <tbody id="aanw-lijst"></tbody>
+    </table>
+    <div id="aanw-leeg" style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Selecteer een klas en datum om te beginnen</div>
+  </div>
+</div>
+
+<!-- TAKEN TAB -->
+<div id="tab-taken" class="section">
+  <div class="row">
+    <select id="klas-taken" onchange="laadTaken()"></select>
+    <button class="btn btn-small btn-outline" onclick="openTaakModal()">+ Nieuwe taak</button>
+  </div>
+
+  <div id="taken-container">
+    <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Nog geen taken toegevoegd.</div>
+  </div>
+</div>
+
+<!-- OVERZICHT TAB -->
+<div id="tab-overzicht" class="section">
+  <div class="row">
+    <select id="klas-overzicht" onchange="laadOverzicht()"></select>
+  </div>
+  <div id="overzicht-container">
+    <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Selecteer een klas</div>
+  </div>
+</div>
+
+<!-- INSTELLINGEN TAB -->
+<div id="tab-instellingen" class="section">
+  <h2>Google Classroom koppeling</h2>
+  <div class="card">
+    <div class="info-bar" style="margin-bottom:1rem;">
+      🔒 Je gegevens worden enkel in jouw browser geladen. Er wordt niets opgeslagen op externe servers.
+    </div>
+    <p style="font-size:0.9rem;color:#555;margin-bottom:1rem;">Koppel je Google Classroom account om automatisch klassen en leerlingen in te laden.</p>
+    <div id="google-status">
+      <button id="google-btn" onclick="koppelGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Aanmelden met Google
+      </button>
+    </div>
+    <div id="google-connected" style="display:none">
+      <div class="badge badge-green" style="margin-bottom:0.75rem;">✓ Verbonden</div>
+      <p id="google-user" style="font-size:0.9rem;margin-bottom:0.75rem;"></p>
+      <button class="btn btn-outline btn-small" onclick="importeerUitClassroom()">🔄 Klassen & leerlingen importeren</button>
+      <button class="btn btn-small" onclick="ontkoppelGoogle()" style="background:#fcebeb;border-color:#e24b4a;color:#a32d2d;margin-left:0.5rem;">Ontkoppelen</button>
+    </div>
+  </div>
+
+  <h2 style="margin-top:1.5rem;">Manueel klassen & leerlingen beheren</h2>
+  <div class="card">
+    <button class="btn btn-small btn-outline" onclick="openKlasModal()" style="margin-bottom:1rem;">+ Klas toevoegen</button>
+    <div id="klassen-lijst-instellingen"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- MODALS -->
+<div class="modal-backdrop" id="modal-klas">
+  <div class="modal">
+    <h3>Klas beheren</h3>
+    <div class="form-group"><label>Klasnaam</label><input type="text" id="input-klasnaam" placeholder="bv. 3A Wiskunde"></div>
+    <div class="form-group">
+      <label>Leerlingen (één per lijn)</label>
+      <textarea id="input-leerlingen" rows="8" style="width:100%;padding:0.4rem;border:1px solid #ccc;border-radius:6px;font-size:0.85rem;font-family:sans-serif;" placeholder="Jan Janssen&#10;Marie Peeters&#10;Tom Desmet"></textarea>
+    </div>
+    <input type="hidden" id="edit-klas-id">
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-small" onclick="sluitModal('modal-klas')">Annuleren</button>
+      <button class="btn btn-small" onclick="slaKlasOp()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-taak">
+  <div class="modal">
+    <h3>Nieuwe taak toevoegen</h3>
+    <div class="form-group"><label>Taaknaam</label><input type="text" id="input-taaknaam" placeholder="bv. Hoofdstuk 3 - oefeningen"></div>
+    <div class="form-group"><label>Deadline</label><input type="date" id="input-deadline"></div>
+    <div class="form-group"><label>Klas</label><select id="input-taak-klas"></select></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-small" onclick="sluitModal('modal-taak')">Annuleren</button>
+      <button class="btn btn-small" onclick="slaaTaakOp()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem('portaal_data') || '{"klassen":[],"aanwezigheden":{},"taken":[]}');
+
+function slaOp() { localStorage.setItem('portaal_data', JSON.stringify(data)); }
+
+function showTab(naam, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + naam).classList.add('active');
+  btn.classList.add('active');
+  if (naam === 'aanwezigheid') laadAanwezigheid();
+  if (naam === 'taken') laadTaken();
+  if (naam === 'overzicht') laadOverzicht();
+  if (naam === 'instellingen') laadInstellingen();
+}
+
+function vulKlasDropdowns() {
+  ['klas-aanw','klas-taken','klas-overzicht','input-taak-klas'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = data.klassen.length === 0 ? '<option value="">-- Voeg eerst een klas toe --</option>' :
+      data.klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+    if (cur) el.value = cur;
+  });
+}
+
+// AANWEZIGHEID
+function laadAanwezigheid() {
+  const klasId = document.getElementById('klas-aanw').value;
+  const datum = document.getElementById('datum-aanw').value;
+  const klas = data.klassen.find(k => k.id == klasId);
+  const tbody = document.getElementById('aanw-lijst');
+  const leeg = document.getElementById('aanw-leeg');
+  const stats = document.getElementById('aanw-stats');
+
+  if (!klas || !datum) { tbody.innerHTML=''; leeg.style.display='block'; stats.style.display='none'; return; }
+
+  const sleutel = klasId + '_' + datum;
+  const opgeslagen = data.aanwezigheden[sleutel] || {};
+
+  leeg.style.display = 'none';
+  stats.style.display = 'grid';
+
+  let aanwezig=0, afwezig=0, telaat=0, leegN=0;
+  tbody.innerHTML = klas.leerlingen.map((naam, i) => {
+    const status = opgeslagen[naam]?.status || '';
+    const opmerking = opgeslagen[naam]?.opmerking || '';
+    if (status === 'aanwezig') aanwezig++;
+    else if (status === 'afwezig') afwezig++;
+    else if (status === 'telaat') telaat++;
+    else leegN++;
+    return `<tr>
+      <td style="color:#aaa;width:30px">${i+1}</td>
+      <td>${naam}</td>
+      <td>
+        <button class="aanw-btn ${status==='aanwezig'?'aanwezig':''}" onclick="setAanw('${sleutel}','${naam}','aanwezig',this)" title="Aanwezig">✓</button>
+        <button class="aanw-btn ${status==='afwezig'?'afwezig':''}" onclick="setAanw('${sleutel}','${naam}','afwezig',this)" title="Afwezig">✕</button>
+        <button class="aanw-btn ${status==='telaat'?'te-laat':''}" onclick="setAanw('${sleutel}','${naam}','telaat',this)" title="Te laat">⏱</button>
+      </td>
+      <td><input type="text" placeholder="opmerking..." value="${opmerking}" onchange="setOpmerking('${sleutel}','${naam}',this.value)" style="width:100%;border:none;background:transparent;font-size:0.85rem;color:#555;outline:none;" /></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('stat-aanwezig').textContent = aanwezig;
+  document.getElementById('stat-afwezig').textContent = afwezig;
+  document.getElementById('stat-telaat').textContent = telaat;
+  document.getElementById('stat-leeg').textContent = leegN;
+}
+
+function setAanw(sleutel, naam, status, btn) {
+  if (!data.aanwezigheden[sleutel]) data.aanwezigheden[sleutel] = {};
+  const huidig = data.aanwezigheden[sleutel][naam]?.status;
+  if (huidig === status) {
+    data.aanwezigheden[sleutel][naam] = {...(data.aanwezigheden[sleutel][naam]||{}), status:''};
+  } else {
+    data.aanwezigheden[sleutel][naam] = {...(data.aanwezigheden[sleutel][naam]||{}), status};
+  }
+  slaOp(); laadAanwezigheid();
+}
+
+function setOpmerking(sleutel, naam, waarde) {
+  if (!data.aanwezigheden[sleutel]) data.aanwezigheden[sleutel] = {};
+  data.aanwezigheden[sleutel][naam] = {...(data.aanwezigheden[sleutel][naam]||{}), opmerking: waarde};
+  slaOp();
+}
+
+function slaAanwezigheidOp() {
+  slaOp();
+  const btn = event.target;
+  btn.textContent = '✓ Opgeslagen';
+  setTimeout(() => btn.textContent = '💾 Opslaan', 1500);
+}
+
+// TAKEN
+function laadTaken() {
+  const klasId = document.getElementById('klas-taken').value;
+  const klas = data.klassen.find(k => k.id == klasId);
+  const container = document.getElementById('taken-container');
+  if (!klas) { container.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Geen klas geselecteerd</div>'; return; }
+
+  const taken = data.taken.filter(t => t.klasId == klasId);
+  if (taken.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Nog geen taken voor deze klas. Klik "+ Nieuwe taak" om te beginnen.</div>';
+    return;
+  }
+
+  container.innerHTML = taken.map(taak => {
+    const ingediend = (taak.ingediend || []);
+    const nakijken = ingediend.filter(n => n.status === 'ingediend');
+    const nagekeken = ingediend.filter(n => n.status === 'nagekeken');
+    const nietIngediend = klas.leerlingen.filter(l => !ingediend.find(n => n.naam === l));
+
+    return `<div class="card" style="margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+        <div>
+          <strong style="font-size:0.95rem;">${taak.naam}</strong>
+          <span style="font-size:0.8rem;color:#888;margin-left:0.5rem;">Deadline: ${taak.deadline || 'geen'}</span>
+        </div>
+        <button class="btn btn-outline btn-small" onclick="verwijderTaak(${taak.id})">🗑</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+        <div>
+          <div style="font-size:0.8rem;color:#666;margin-bottom:0.4rem;">📬 In te dienen (${nietIngediend.length})</div>
+          ${nietIngediend.map(naam => `<div class="leerling-tag">${naam} <button onclick="markeerStatus(${taak.id},'${naam}','ingediend')" title="Markeer als ingediend" style="border:none;background:none;cursor:pointer;color:#378add;font-size:0.8rem;padding:0;">✓</button></div>`).join('')}
+          ${nietIngediend.length === 0 ? '<span style="font-size:0.82rem;color:#aaa">Iedereen ingediend 🎉</span>' : ''}
+        </div>
+        <div>
+          <div style="font-size:0.8rem;color:#666;margin-bottom:0.4rem;">📥 Nakijken (${nakijken.length})</div>
+          ${nakijken.map(n => `<div class="leerling-tag">${n.naam} <button onclick="markeerStatus(${taak.id},'${n.naam}','nagekeken')" title="Markeer als nagekeken" style="border:none;background:none;cursor:pointer;color:#639922;font-size:0.8rem;padding:0;">✓</button></div>`).join('')}
+          ${nakijken.length === 0 ? '<span style="font-size:0.82rem;color:#aaa">Geen</span>' : ''}
+        </div>
+        <div>
+          <div style="font-size:0.8rem;color:#666;margin-bottom:0.4rem;">✅ Nagekeken (${nagekeken.length})</div>
+          ${nagekeken.map(n => `<div class="leerling-tag" style="background:#eaf3de;">${n.naam}</div>`).join('')}
+          ${nagekeken.length === 0 ? '<span style="font-size:0.82rem;color:#aaa">Geen</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markeerStatus(taakId, naam, status) {
+  const taak = data.taken.find(t => t.id === taakId);
+  if (!taak) return;
+  if (!taak.ingediend) taak.ingediend = [];
+  const bestaand = taak.ingediend.find(n => n.naam === naam);
+  if (bestaand) bestaand.status = status;
+  else taak.ingediend.push({naam, status});
+  slaOp(); laadTaken();
+}
+
+function verwijderTaak(id) {
+  if (!confirm('Taak verwijderen?')) return;
+  data.taken = data.taken.filter(t => t.id !== id);
+  slaOp(); laadTaken();
+}
+
+// OVERZICHT
+function laadOverzicht() {
+  const klasId = document.getElementById('klas-overzicht').value;
+  const klas = data.klassen.find(k => k.id == klasId);
+  const container = document.getElementById('overzicht-container');
+  if (!klas) { container.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Selecteer een klas</div>'; return; }
+
+  const aanwSleutels = Object.keys(data.aanwezigheden).filter(k => k.startsWith(klasId + '_'));
+  const datums = aanwSleutels.map(k => k.split('_')[1]).sort().reverse().slice(0,10);
+
+  if (datums.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">Nog geen aanwezigheden geregistreerd voor deze klas.</div>'; return;
+  }
+
+  const rows = klas.leerlingen.map(naam => {
+    const statussen = datums.map(d => {
+      const s = data.aanwezigheden[klasId + '_' + d]?.[naam]?.status || '';
+      if (s === 'aanwezig') return `<td style="text-align:center"><span class="badge badge-green">A</span></td>`;
+      if (s === 'afwezig') return `<td style="text-align:center"><span class="badge badge-red">AF</span></td>`;
+      if (s === 'telaat') return `<td style="text-align:center"><span class="badge badge-amber">TL</span></td>`;
+      return `<td style="text-align:center"><span style="color:#ccc">—</span></td>`;
+    }).join('');
+    return `<tr><td>${naam}</td>${statussen}</tr>`;
+  }).join('');
+
+  container.innerHTML = `<div class="card" style="overflow-x:auto;">
+    <table style="min-width:500px;">
+      <thead><tr><th>Leerling</th>${datums.map(d => `<th style="font-size:0.8rem">${d}</th>`).join('')}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+// KLASSEN
+function openKlasModal(id) {
+  document.getElementById('edit-klas-id').value = id || '';
+  if (id) {
+    const klas = data.klassen.find(k => k.id == id);
+    document.getElementById('input-klasnaam').value = klas.naam;
+    document.getElementById('input-leerlingen').value = klas.leerlingen.join('\n');
+  } else {
+    document.getElementById('input-klasnaam').value = '';
+    document.getElementById('input-leerlingen').value = '';
+  }
+  document.getElementById('modal-klas').classList.add('open');
+}
+
+function slaKlasOp() {
+  const naam = document.getElementById('input-klasnaam').value.trim();
+  const leerlingenRaw = document.getElementById('input-leerlingen').value.trim();
+  if (!naam) { alert('Geef de klas een naam.'); return; }
+  const leerlingen = leerlingenRaw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const editId = document.getElementById('edit-klas-id').value;
+  if (editId) {
+    const klas = data.klassen.find(k => k.id == editId);
+    klas.naam = naam; klas.leerlingen = leerlingen;
+  } else {
+    data.klassen.push({ id: Date.now(), naam, leerlingen });
+  }
+  slaOp(); vulKlasDropdowns(); laadInstellingen();
+  sluitModal('modal-klas');
+  laadAanwezigheid();
+}
+
+function verwijderKlas(id) {
+  if (!confirm('Klas verwijderen? Alle aanwezigheidsdata gaat verloren.')) return;
+  data.klassen = data.klassen.filter(k => k.id != id);
+  data.aanwezigheden = Object.fromEntries(Object.entries(data.aanwezigheden).filter(([k]) => !k.startsWith(id + '_')));
+  slaOp(); vulKlasDropdowns(); laadInstellingen();
+}
+
+function laadInstellingen() {
+  const container = document.getElementById('klassen-lijst-instellingen');
+  if (data.klassen.length === 0) { container.innerHTML = '<p style="font-size:0.9rem;color:#aaa;">Nog geen klassen.</p>'; return; }
+  container.innerHTML = data.klassen.map(k => `
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:0.5px solid #eee;">
+      <strong style="flex:1;font-size:0.9rem;">${k.naam}</strong>
+      <span style="font-size:0.82rem;color:#888;">${k.leerlingen.length} leerlingen</span>
+      <button class="btn btn-outline btn-small" onclick="openKlasModal(${k.id})">✏ Bewerken</button>
+      <button class="btn btn-small" onclick="verwijderKlas(${k.id})" style="background:#fcebeb;border-color:#e24b4a;color:#a32d2d;">🗑</button>
+    </div>`).join('');
+}
+
+// TAKEN MODAL
+function openTaakModal() {
+  document.getElementById('input-taaknaam').value = '';
+  document.getElementById('input-deadline').value = '';
+  vulKlasDropdowns();
+  const klasId = document.getElementById('klas-taken').value;
+  document.getElementById('input-taak-klas').value = klasId;
+  document.getElementById('modal-taak').classList.add('open');
+}
+
+function slaaTaakOp() {
+  const naam = document.getElementById('input-taaknaam').value.trim();
+  if (!naam) { alert('Geef de taak een naam.'); return; }
+  const deadline = document.getElementById('input-deadline').value;
+  const klasId = document.getElementById('input-taak-klas').value;
+  data.taken.push({ id: Date.now(), naam, deadline, klasId, ingediend: [] });
+  slaOp(); sluitModal('modal-taak'); laadTaken();
+}
+
+function sluitModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// GOOGLE (placeholder)
+function koppelGoogle() {
+  alert('Google Classroom koppeling: dit configureren we in de volgende stap.\n\nJe hebt eerst een Google API sleutel nodig. Zie de instructies in de chat.');
+}
+function ontkoppelGoogle() {
+  document.getElementById('google-connected').style.display = 'none';
+  document.getElementById('google-status').style.display = 'block';
+}
+function importeerUitClassroom() {
+  alert('Koppeling nog niet geconfigureerd. Volg de stappen in de chat om je Google API sleutel in te stellen.');
+}
+
+// INIT
+function init() {
+  const vandaag = new Date().toISOString().split('T')[0];
+  document.getElementById('datum-aanw').value = vandaag;
+  vulKlasDropdowns();
+  laadAanwezigheid();
+  if (data.klassen.length === 0) {
+    setTimeout(() => {
+      if (confirm('Welkom! Wil je nu je eerste klas aanmaken?')) openKlasModal();
+    }, 300);
+  }
+}
+
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+init();
+</script>
+</body>
+</html>
