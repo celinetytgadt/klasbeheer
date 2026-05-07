@@ -738,10 +738,177 @@ function slaMailOp(){
   save(); alert('✓ Mail-instellingen opgeslagen!');
 }
 
-// GOOGLE
-function koppelGoogle(){alert('Google Classroom koppeling configureren we in de volgende stap.');}
-function ontkoppelGoogle(){document.getElementById('google-verbonden-blok').style.display='none';document.getElementById('google-status-blok').style.display='block';}
-function importeerClassroom(){alert('Koppeling nog niet geconfigureerd.');}
+// GOOGLE CLASSROOM
+const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.profile.emails';
+let googleToken = null;
+
+function koppelGoogle() {
+  // Laad Google Identity Services script als het nog niet geladen is
+  if (!window.google?.accounts) {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = () => startGoogleAuth();
+    document.head.appendChild(script);
+  } else {
+    startGoogleAuth();
+  }
+}
+
+function startGoogleAuth() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: GOOGLE_SCOPES,
+    callback: (resp) => {
+      if (resp.error) { alert('Aanmelden mislukt: ' + resp.error); return; }
+      googleToken = resp.access_token;
+      // Haal gebruikersnaam op
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + googleToken }
+      }).then(r=>r.json()).then(info => {
+        document.getElementById('google-status-blok').style.display = 'none';
+        document.getElementById('google-verbonden-blok').style.display = 'block';
+        document.getElementById('google-gebruiker').textContent = '✉ ' + (info.email || '');
+      });
+    }
+  });
+  client.requestAccessToken();
+}
+
+function ontkoppelGoogle() {
+  googleToken = null;
+  document.getElementById('google-verbonden-blok').style.display = 'none';
+  document.getElementById('google-status-blok').style.display = 'block';
+}
+
+async function importeerClassroom() {
+  if (!googleToken) { alert('Eerst aanmelden met Google.'); return; }
+  const btn = document.querySelector('#google-verbonden-blok .btn.outline');
+  btn.textContent = '⏳ Laden…'; btn.disabled = true;
+
+  try {
+    // Haal alle klassen op
+    const resp = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30', {
+      headers: { Authorization: 'Bearer ' + googleToken }
+    });
+    const data = await resp.json();
+    if (!data.courses || data.courses.length === 0) {
+      alert('Geen actieve klassen gevonden in Google Classroom.'); return;
+    }
+
+    // Haal leerlingen op voor elke klas
+    const klassen = [];
+    for (const course of data.courses) {
+      const rResp = await fetch(`https://classroom.googleapis.com/v1/courses/${course.id}/students?pageSize=100`, {
+        headers: { Authorization: 'Bearer ' + googleToken }
+      });
+      const rData = await rResp.json();
+      klassen.push({
+        courseId: course.id,
+        naam: course.name,
+        leerlingen: (rData.students || []).map(s => ({
+          naam: s.profile.name.fullName,
+          email: s.profile.emailAddress || ''
+        }))
+      });
+    }
+
+    // Toon importeer-modal
+    toonImportModal(klassen);
+  } catch(e) {
+    alert('Fout bij ophalen: ' + e.message);
+  } finally {
+    btn.textContent = '🔄 Importeren'; btn.disabled = false;
+  }
+}
+
+function toonImportModal(klassen) {
+  // Maak modal dynamisch aan als die nog niet bestaat
+  let modal = document.getElementById('modal-import');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-backdrop';
+    modal.id = 'modal-import';
+    modal.innerHTML = `<div class="modal wide">
+      <h3>📥 Importeren uit Google Classroom</h3>
+      <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Kies welke klassen je wil importeren. Bestaande groepen met dezelfde naam worden bijgewerkt.</p>
+      <div id="import-klassen-lijst"></div>
+      <div class="modal-footer">
+        <button class="btn outline sm" onclick="sluitModal('modal-import')">Annuleren</button>
+        <button class="btn sm" onclick="voerImportUit()">✅ Importeren</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if(e.target===modal) modal.classList.remove('open'); });
+  }
+
+  const typeLabel = {boekhouden:'📘 Boekhouden',kern68:'📗 Kern 6+8',andere:'📙 Andere'};
+  document.getElementById('import-klassen-lijst').innerHTML = klassen.map((klas,i) => {
+    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
+    return `<div style="padding:0.75rem 0;border-bottom:1px solid #f0f2f5;">
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <input type="checkbox" id="imp_${i}" checked data-idx="${i}">
+        <label for="imp_${i}" style="font-weight:600;flex:1;cursor:pointer;">${klas.naam}</label>
+        <span style="font-size:0.8rem;color:#888;">${klas.leerlingen.length} leerlingen</span>
+        ${bestaand ? '<span class="badge amber">bijwerken</span>' : '<span class="badge green">nieuw</span>'}
+      </div>
+      <div style="margin-top:0.4rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span style="font-size:0.82rem;color:#666;">Type:</span>
+        <select id="imp_type_${i}" style="font-size:0.82rem;">
+          <option value="andere" ${bestaand?.type==='andere'?'selected':''}>📙 Andere kernen</option>
+          <option value="boekhouden" ${bestaand?.type==='boekhouden'?'selected':''}>📘 Boekhouden</option>
+          <option value="kern68" ${bestaand?.type==='kern68'?'selected':''}>📗 Kern 6+8</option>
+        </select>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sla klassen data op voor gebruik bij importeren
+  modal._klassen = klassen;
+  modal.classList.add('open');
+}
+
+function voerImportUit() {
+  const modal = document.getElementById('modal-import');
+  const klassen = modal._klassen;
+  const checked = Array.from(document.querySelectorAll('#import-klassen-lijst input[type=checkbox]:checked'));
+  let nieuw = 0, bijgewerkt = 0;
+
+  checked.forEach(cb => {
+    const i = +cb.dataset.idx;
+    const klas = klassen[i];
+    const type = document.getElementById(`imp_type_${i}`).value;
+    const leerlingenNamen = klas.leerlingen.map(l => l.naam);
+    const emails = klas.leerlingen.map(l => l.email);
+    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
+
+    if (bestaand) {
+      // Bijwerken — coaches behouden
+      const oudeCoaches = bestaand.coaches || [];
+      bestaand.leerlingen = leerlingenNamen;
+      bestaand.emails = emails;
+      bestaand.type = type;
+      // Coach per naam bewaren (niet per positie)
+      const coachMap = {};
+      (bestaand.leerlingen||[]).forEach((n,idx) => { coachMap[n] = oudeCoaches[idx]||''; });
+      bestaand.coaches = leerlingenNamen.map(n => coachMap[n]||'');
+      bijgewerkt++;
+    } else {
+      db.groepen.push({
+        id: Date.now() + i,
+        naam: klas.naam,
+        type,
+        leerlingen: leerlingenNamen,
+        emails,
+        coaches: leerlingenNamen.map(() => '')
+      });
+      nieuw++;
+    }
+  });
+
+  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-import');
+  alert(`✅ Klaar!\n${nieuw} nieuwe groep(en) aangemaakt\n${bijgewerkt} groep(en) bijgewerkt\n\nVergeet niet de coaches in te vullen via de ✏ knop bij elke groep.`);
+}
 
 // DATA
 function exporteerData(){
