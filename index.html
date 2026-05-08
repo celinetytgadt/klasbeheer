@@ -157,13 +157,17 @@ tr:last-child td { border-bottom: none; }
 <div id="tab-instellingen" class="section">
   <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin-bottom:0.75rem;">Groepen beheren</h2>
   <div class="card">
-    <button class="btn sm outline" onclick="openGroepModal()" style="margin-bottom:1rem;">+ Groep toevoegen</button>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <button class="btn sm outline" onclick="openGroepModal()">+ Groep toevoegen</button>
+      <button class="btn sm outline" onclick="openSamenvoegenModal()">🔀 Klassen samenvoegen</button>
+      <button class="btn sm outline" onclick="openSubgroepModal()">✂ Subgroep aanmaken</button>
+    </div>
     <div id="groepen-lijst"></div>
   </div>
 
   <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 0.75rem;">Mail-instellingen</h2>
   <div class="card">
-    <div class="info-bar">Gebruik <code>{voornaam}</code>, <code>{taaknaam}</code>, <code>{deadline}</code>, <code>{nieuwe_deadline}</code> als plaatshouders.</div>
+    <div class="info-bar">Gebruik <code>{voornaam}</code>, <code>{taaknaam}</code>, <code>{deadline}</code>, <code>{nieuwe_deadline}</code> als plaatshouders. Na het opstellen kopieer je de tekst naar jouw eigen mailprogramma.</div>
 
     <div style="font-weight:600;font-size:0.9rem;color:#1e3a5f;margin-bottom:0.4rem;">📘 Boekhouden (Kern 2+3) — vaste tekst</div>
     <textarea id="mail-template-boekh" rows="8" style="width:100%;font-family:inherit;font-size:0.85rem;margin-bottom:1rem;"></textarea>
@@ -230,11 +234,7 @@ tr:last-child td { border-bottom: none; }
       <textarea id="groep-leerlingen" rows="7" placeholder="Jan Janssen&#10;Marie Peeters" style="font-size:0.85rem;"></textarea>
     </div>
     <div class="form-group">
-      <label>E-mailadressen leerlingen (zelfde volgorde)</label>
-      <textarea id="groep-emails" rows="7" placeholder="jan.janssen@school.be&#10;marie.peeters@school.be" style="font-size:0.85rem;"></textarea>
-    </div>
-    <div class="form-group">
-      <label>E-mailadres coach per leerling (zelfde volgorde)</label>
+      <label>Coach per leerling (zelfde volgorde — naam of e-mail)</label>
       <textarea id="groep-coaches" rows="7" placeholder="coach.a@school.be&#10;coach.b@school.be" style="font-size:0.85rem;"></textarea>
     </div>
     <input type="hidden" id="groep-edit-id">
@@ -290,7 +290,7 @@ tr:last-child td { border-bottom: none; }
     <div id="deadline-inhoud"></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluitModal('modal-deadlines')">Sluiten</button>
-      <button class="btn sm" onclick="stuurGeselecteerdeMails()">📧 Verstuur geselecteerde mails</button>
+      <button class="btn sm" onclick="stuurGeselecteerdeMails()">✉ Teksten opstellen</button>
     </div>
   </div>
 </div>
@@ -298,7 +298,7 @@ tr:last-child td { border-bottom: none; }
 <!-- MODAL: MAIL PREVIEW -->
 <div class="modal-backdrop" id="modal-mail">
   <div class="modal wide">
-    <h3>📧 Mail voor <span id="mail-preview-naam"></span></h3>
+    <h3>✉ Mailtekst voor <span id="mail-preview-naam"></span></h3>
     <div class="form-group">
       <label>Nieuwe deadline</label>
       <input type="date" id="mail-nieuwe-deadline" oninput="updateMailPreview()">
@@ -309,10 +309,10 @@ tr:last-child td { border-bottom: none; }
     </div>
     <div style="font-size:0.82rem;font-weight:600;color:#555;margin-bottom:0.4rem;">Voorbeeld:</div>
     <div id="mail-preview-tekst" style="background:#f5f7fb;border:1px solid #e2e6ed;border-radius:7px;padding:1rem;font-size:0.85rem;white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6;"></div>
-    <div style="margin-top:0.75rem;font-size:0.82rem;color:#888;">📬 Naar: <span id="mail-preview-to"></span></div>
+    <div style="margin-top:0.75rem;font-size:0.82rem;color:#888;">👤 Coach: <span id="mail-preview-to"></span></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluitModal('modal-mail')">Annuleren</button>
-      <button class="btn sm" onclick="openGmail()">📧 Openen in Gmail</button>
+      <button class="btn sm" id="btn-kopieer-mail" onclick="kopieerMailTekst()">📋 Kopiëren</button>
     </div>
   </div>
 </div>
@@ -590,15 +590,13 @@ function openDeadlineModal(){
       <div style="font-size:0.8rem;color:#888;margin-bottom:0.5rem;">📅 ${taak.deadline} · ${groep.naam}</div>
       ${te_laat.map(naam=>{
         const idx=groep.leerlingen.indexOf(naam);
-        const email=groep.emails?.[idx]||'';
         const coach=groep.coaches?.[idx]||'';
         const cbid=`cb_${taak.id}_${naam.replace(/\W/g,'_')}`;
         return`<div class="deadline-row">
           <input type="checkbox" id="${cbid}" checked data-taak="${taak.id}" data-naam="${naam}" data-gid="${groep.id}">
           <label for="${cbid}" style="flex:1;cursor:pointer;font-weight:500;">${naam}</label>
-          <span style="font-size:0.78rem;color:${email?'#888':'#e24b4a'}">${email||'⚠ geen email'}</span>
-          ${coach?`<span style="font-size:0.78rem;color:#888;">coach: ${coach}</span>`:''}
-          <button class="btn xs outline" onclick="previewMail(${taak.id},'${naam}',${groep.id})">👁 Preview</button>
+          ${coach?`<span style="font-size:0.78rem;color:#888;">coach: ${coach}</span>`:'<span style="font-size:0.78rem;color:#e24b4a;">⚠ geen coach</span>'}
+          <button class="btn xs outline" onclick="previewMail(${taak.id},'${naam}',${groep.id})">✉ Tekst opstellen</button>
         </div>`;
       }).join('')}
     </div>`;
@@ -612,9 +610,9 @@ function previewMail(tid,naam,gid){
   const groep=db.groepen.find(g=>g.id==gid);
   if(!taak||!groep)return;
   const idx=groep.leerlingen.indexOf(naam);
-  mailCtx={taak,naam,groep,voornaam:naam.split(' ')[0],email:groep.emails?.[idx]||'',coach:groep.coaches?.[idx]||''};
+  mailCtx={taak,naam,groep,voornaam:naam.split(' ')[0],coach:groep.coaches?.[idx]||''};
   document.getElementById('mail-preview-naam').textContent=naam;
-  document.getElementById('mail-preview-to').textContent=[mailCtx.email,mailCtx.coach].filter(Boolean).join(', ')||'⚠ geen e-mailadres ingesteld';
+  document.getElementById('mail-preview-to').textContent=mailCtx.coach||'⚠ geen coach ingesteld';
   document.getElementById('mail-nieuwe-deadline').value='';
   const isKern68=groep.type==='kern68';
   document.getElementById('kern68-opties-blok').style.display=isKern68?'block':'none';
@@ -642,14 +640,22 @@ function updateMailPreview(){
   const vervang=t=>t.replace(/{voornaam}/g,voornaam).replace(/{taaknaam}/g,taak.naam).replace(/{deadline}/g,taak.deadline||'?').replace(/{nieuwe_deadline}/g,nd);
   document.getElementById('mail-preview-tekst').textContent=vervang(tekst);
 }
-function openGmail(){
-  if(!mailCtx)return;
+function kopieerMailTekst(){
   const tekst=document.getElementById('mail-preview-tekst').textContent;
-  const to=[mailCtx.email,mailCtx.coach].filter(Boolean).join(',');
-  const sub=encodeURIComponent(`Herinnering: taak "${mailCtx.taak.naam}"`);
-  const body=encodeURIComponent(tekst);
-  window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(to)}&su=${sub}&body=${body}`,'_blank');
-  sluitModal('modal-mail');
+  navigator.clipboard.writeText(tekst).then(()=>{
+    const btn=document.getElementById('btn-kopieer-mail');
+    btn.textContent='✅ Gekopieerd!';
+    setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
+  }).catch(()=>{
+    // Fallback voor browsers zonder clipboard API
+    const ta=document.createElement('textarea');
+    ta.value=tekst; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    const btn=document.getElementById('btn-kopieer-mail');
+    btn.textContent='✅ Gekopieerd!';
+    setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
+  });
 }
 function stuurGeselecteerdeMails(){
   const checked=Array.from(document.querySelectorAll('#deadline-inhoud input[type=checkbox]:checked'));
@@ -682,10 +688,9 @@ function openGroepModal(id){
     document.getElementById('groep-naam').value=g.naam;
     document.getElementById('groep-type').value=g.type||'andere';
     document.getElementById('groep-leerlingen').value=g.leerlingen.join('\n');
-    document.getElementById('groep-emails').value=(g.emails||[]).join('\n');
     document.getElementById('groep-coaches').value=(g.coaches||[]).join('\n');
   } else {
-    ['groep-naam','groep-leerlingen','groep-emails','groep-coaches'].forEach(id=>document.getElementById(id).value='');
+    ['groep-naam','groep-leerlingen','groep-coaches'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('groep-type').value='andere';
   }
   document.getElementById('modal-groep').classList.add('open');
@@ -694,7 +699,7 @@ function slaGroepOp(){
   const naam=document.getElementById('groep-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
   const type=document.getElementById('groep-type').value;
   const leerlingen=document.getElementById('groep-leerlingen').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  const emails=document.getElementById('groep-emails').value.split('\n').map(l=>l.trim());
+  const emails=[];
   const coaches=document.getElementById('groep-coaches').value.split('\n').map(l=>l.trim());
   const eid=document.getElementById('groep-edit-id').value;
   if(eid)Object.assign(db.groepen.find(g=>g.id==eid),{naam,type,leerlingen,emails,coaches});
@@ -740,7 +745,7 @@ function slaMailOp(){
 
 // GOOGLE CLASSROOM
 const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.profile.emails';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly';
 let googleToken = null;
 
 function koppelGoogle() {
@@ -768,7 +773,7 @@ function startGoogleAuth() {
       }).then(r=>r.json()).then(info => {
         document.getElementById('google-status-blok').style.display = 'none';
         document.getElementById('google-verbonden-blok').style.display = 'block';
-        document.getElementById('google-gebruiker').textContent = '✉ ' + (info.email || '');
+        document.getElementById('google-gebruiker').textContent = '✓ Verbonden als ' + (info.name || info.email || 'Google gebruiker');
       });
     }
   });
@@ -807,8 +812,7 @@ async function importeerClassroom() {
         courseId: course.id,
         naam: course.name,
         leerlingen: (rData.students || []).map(s => ({
-          naam: s.profile.name.fullName,
-          email: s.profile.emailAddress || ''
+          naam: s.profile.name.fullName
         }))
       });
     }
@@ -886,7 +890,7 @@ function voerImportUit() {
       // Bijwerken — coaches behouden
       const oudeCoaches = bestaand.coaches || [];
       bestaand.leerlingen = leerlingenNamen;
-      bestaand.emails = emails;
+      bestaand.emails = [];
       bestaand.type = type;
       // Coach per naam bewaren (niet per positie)
       const coachMap = {};
@@ -899,7 +903,7 @@ function voerImportUit() {
         naam: klas.naam,
         type,
         leerlingen: leerlingenNamen,
-        emails,
+        emails: [],
         coaches: leerlingenNamen.map(() => '')
       });
       nieuw++;
@@ -927,6 +931,172 @@ vulAlleDD(); checkDeadlines(); setInterval(checkDeadlines,60000);
 if(db.groepen.length===0){
   setTimeout(()=>{if(confirm('Welkom!\n\nWil je nu je eerste groep aanmaken?')){showTab('instellingen',document.querySelector('[data-tab=instellingen]'));setTimeout(openGroepModal,200);}},400);
 }
+
+// SAMENVOEGEN
+function openSamenvoegenModal() {
+  document.getElementById('samen-naam').value = '';
+  document.getElementById('samen-type').value = 'andere';
+  document.getElementById('samen-klassen-lijst').innerHTML = db.groepen.map((g,i) =>
+    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;">
+      <input type="checkbox" value="${g.id}">
+      <span style="flex:1">${g.naam}</span>
+      <span style="font-size:0.78rem;color:#aaa">${g.leerlingen.length} lln</span>
+    </label>`
+  ).join('') || '<p style="color:#bbb;font-size:0.85rem;">Geen groepen beschikbaar.</p>';
+  document.getElementById('modal-samenvoegen').classList.add('open');
+}
+
+function voerSamenvoegenUit() {
+  const naam = document.getElementById('samen-naam').value.trim();
+  if (!naam) { alert('Geef een naam voor de nieuwe groep.'); return; }
+  const type = document.getElementById('samen-type').value;
+  const gekozen = Array.from(document.querySelectorAll('#samen-klassen-lijst input:checked')).map(cb => cb.value);
+  if (gekozen.length < 2) { alert('Selecteer minstens 2 klassen om samen te voegen.'); return; }
+
+  const leerlingenMap = new Map(); // naam -> {email, coach} — dedupliceert automatisch
+  gekozen.forEach(gid => {
+    const g = db.groepen.find(g => g.id == gid);
+    if (!g) return;
+    g.leerlingen.forEach((naam, i) => {
+      if (!leerlingenMap.has(naam)) {
+        leerlingenMap.set(naam, { coach: g.coaches?.[i] || '' });
+      }
+    });
+  });
+
+  const leerlingen = [...leerlingenMap.keys()].sort();
+  db.groepen.push({
+    id: Date.now(), naam, type,
+    leerlingen,
+    emails: [],
+    coaches: leerlingen.map(n => leerlingenMap.get(n).coach)
+  });
+  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-samenvoegen');
+  alert(`✅ Groep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.\n\nDe originele klassen staan er nog bij — je kan ze verwijderen als je ze niet meer nodig hebt.`);
+}
+
+// SUBGROEP
+function openSubgroepModal() {
+  document.getElementById('sub-naam').value = '';
+  document.getElementById('sub-type').value = 'boekhouden';
+  renderSubBronklassen();
+  document.getElementById('sub-leerlingen-lijst').innerHTML = '<p style="color:#bbb;font-size:0.85rem;padding:0.5rem;">Selecteer eerst bronklassen hierboven.</p>';
+  document.getElementById('modal-subgroep').classList.add('open');
+}
+
+function renderSubBronklassen() {
+  document.getElementById('sub-bronklassen').innerHTML = db.groepen.map(g =>
+    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;">
+      <input type="checkbox" value="${g.id}" onchange="renderSubLeerlingen()">
+      <span style="flex:1">${g.naam}</span>
+      <span style="font-size:0.78rem;color:#aaa">${g.leerlingen.length} lln</span>
+    </label>`
+  ).join('') || '<p style="color:#bbb;font-size:0.85rem;">Geen groepen beschikbaar.</p>';
+}
+
+function renderSubLeerlingen() {
+  const gekozen = Array.from(document.querySelectorAll('#sub-bronklassen input:checked')).map(cb => cb.value);
+  const leerlingenMap = new Map();
+  gekozen.forEach(gid => {
+    const g = db.groepen.find(g => g.id == gid);
+    if (!g) return;
+    g.leerlingen.forEach((naam, i) => {
+      if (!leerlingenMap.has(naam)) {
+        leerlingenMap.set(naam, { coach: g.coaches?.[i] || '', klas: g.naam });
+      }
+    });
+  });
+  const gesorteerd = [...leerlingenMap.keys()].sort();
+  const cont = document.getElementById('sub-leerlingen-lijst');
+  if (gesorteerd.length === 0) {
+    cont.innerHTML = '<p style="color:#bbb;font-size:0.85rem;padding:0.5rem;">Geen leerlingen gevonden.</p>'; return;
+  }
+  cont.innerHTML = `<div style="padding:0.35rem;margin-bottom:0.25rem;">
+    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.82rem;color:#888;">
+      <input type="checkbox" onchange="allesSubAanvinken(this)"> Alles selecteren
+    </label>
+  </div>` + gesorteerd.map(naam => {
+    const info = leerlingenMap.get(naam);
+    return `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;border-top:1px solid #f5f5f5;">
+      <input type="checkbox" class="sub-lln-cb" value="${naam}" data-coach="${info.coach}">
+      <span style="flex:1">${naam}</span>
+      <span style="font-size:0.78rem;color:#aaa">${info.klas}</span>
+    </label>`;
+  }).join('');
+}
+
+function allesSubAanvinken(master) {
+  document.querySelectorAll('.sub-lln-cb').forEach(cb => cb.checked = master.checked);
+}
+
+function voerSubgroepUit() {
+  const naam = document.getElementById('sub-naam').value.trim();
+  if (!naam) { alert('Geef een naam voor de subgroep.'); return; }
+  const type = document.getElementById('sub-type').value;
+  const gekozen = Array.from(document.querySelectorAll('.sub-lln-cb:checked'));
+  if (gekozen.length === 0) { alert('Vink minstens één leerling aan.'); return; }
+
+  const leerlingen = gekozen.map(cb => cb.value);
+  const coaches = gekozen.map(cb => cb.dataset.coach || '');
+
+  db.groepen.push({ id: Date.now(), naam, type, leerlingen, emails: [], coaches });
+  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-subgroep');
+  alert(`✅ Subgroep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.`);
+}
 </script>
+
+<!-- MODAL: SAMENVOEGEN -->
+<div class="modal-backdrop" id="modal-samenvoegen">
+  <div class="modal wide">
+    <h3>🔀 Klassen samenvoegen tot één groep</h3>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Selecteer de klassen die je wil samenvoegen. De leerlingen worden samengevoegd in één nieuwe portaalgroep.</p>
+    <div class="form-group"><label>Naam van de nieuwe groep</label><input type="text" id="samen-naam" placeholder="bv. Kern 6+8"></div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="samen-type">
+        <option value="andere">📙 Andere kernen</option>
+        <option value="kern68">📗 Kern 6+8</option>
+        <option value="boekhouden">📘 Boekhouden</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Klassen selecteren</label>
+      <div id="samen-klassen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:280px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn outline sm" onclick="sluitModal('modal-samenvoegen')">Annuleren</button>
+      <button class="btn sm" onclick="voerSamenvoegenUit()">Samenvoegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SUBGROEP -->
+<div class="modal-backdrop" id="modal-subgroep">
+  <div class="modal wide">
+    <h3>✂ Subgroep aanmaken uit bestaande klassen</h3>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Vink aan welke leerlingen uit de geselecteerde klassen in de subgroep horen. Gebruik dit voor Boekhouden 4.</p>
+    <div class="form-group"><label>Naam van de subgroep</label><input type="text" id="sub-naam" placeholder="bv. Boekhouden 4"></div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="sub-type">
+        <option value="boekhouden">📘 Boekhouden</option>
+        <option value="kern68">📗 Kern 6+8</option>
+        <option value="andere">📙 Andere kernen</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Bronklassen (leerlingen uit deze klassen worden getoond)</label>
+      <div id="sub-bronklassen" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;margin-bottom:0.75rem;"></div>
+    </div>
+    <div class="form-group">
+      <label>Leerlingen aanvinken</label>
+      <div id="sub-leerlingen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:300px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn outline sm" onclick="sluitModal('modal-subgroep')">Annuleren</button>
+      <button class="btn sm" onclick="voerSubgroepUit()">Subgroep aanmaken</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
