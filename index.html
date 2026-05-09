@@ -142,7 +142,7 @@ tr:last-child td { border-bottom: none; }
     </div>
   </div>
   <div id="taken-sync-bar" style="display:none;" class="info-bar">⏳ Taken ophalen uit Classroom…</div>
-  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div></div>
+  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Kies een Classroom-klas hierboven</div></div>
 </div>
 
 <!-- OVERZICHT -->
@@ -416,16 +416,24 @@ function classroomNaarPortaalStatus(sub) {
 
 function vulTakenKlassen() {
   const sel = document.getElementById('taken-klas');
-  const geimporteerd = db.classroomKlassen || [];
   const cur = sel.value;
-  if(!geimporteerd.length){sel.innerHTML='<option value="">— eerst importeren via Instellingen —</option>';return;}
-  sel.innerHTML='<option value="">— kies een klas —</option>'+geimporteerd.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
+
+  // classroomKlassen worden opgeslagen bij importeren
+  // Als die leeg zijn: toon melding
+  const klassen = db.classroomKlassen || [];
+  if(!klassen.length){
+    sel.innerHTML='<option value="">— importeer eerst via Instellingen —</option>';
+    document.getElementById('taken-container').innerHTML='<div style="text-align:center;padding:2rem;color:#aaa">Ga naar ⚙ Instellingen → Google Classroom → Importeren</div>';
+    return;
+  }
+  sel.innerHTML='<option value="">— kies een klas —</option>'+klassen.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
   if(cur) sel.value=cur;
+
   // Token automatisch ophalen als localStorage verbonden zegt maar token leeg is
   if(!googleToken && localStorage.getItem('lkr_google')==='1') {
     document.getElementById('taken-sync').style.display='block';
     document.getElementById('taken-sync').textContent='⏳ Verbinding herstellen…';
-    koppelGoogle(false); // stil aanmelden, geen taken herladen (dat doet de gebruiker via dropdown)
+    koppelGoogle(false);
   }
 }
 
