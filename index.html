@@ -5,91 +5,81 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leerkracht Portaal</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a1a; font-size: 15px; }
-header { background: #1e3a5f; color: white; padding: 0.85rem 1.5rem; display: flex; align-items: center; gap: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-header h1 { font-size: 1.05rem; font-weight: 500; }
-header .spacer { flex: 1; }
-header .hdr-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: white; padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.82rem; position: relative; }
-header .hdr-btn:hover { background: rgba(255,255,255,0.25); }
-#deadline-badge { position: absolute; top: -5px; right: -5px; background: #e24b4a; color: white; border-radius: 50%; width: 17px; height: 17px; font-size: 0.65rem; display: none; align-items: center; justify-content: center; font-weight: 700; }
-nav { background: white; border-bottom: 1px solid #dde1e8; padding: 0 1.5rem; display: flex; }
-nav button { padding: 0.8rem 1.1rem; border: none; background: none; cursor: pointer; font-size: 0.88rem; color: #666; border-bottom: 3px solid transparent; white-space: nowrap; }
-nav button.active { color: #1e3a5f; border-bottom-color: #1e3a5f; font-weight: 600; }
-main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
-.section { display: none; }
-.section.active { display: block; }
-.card { background: white; border-radius: 10px; border: 1px solid #e2e6ed; padding: 1.25rem; margin-bottom: 1rem; }
-.row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
-label.lbl { font-size: 0.82rem; color: #666; }
-select, input[type=date], input[type=text], input[type=email], textarea { padding: 0.45rem 0.65rem; border: 1px solid #cdd2db; border-radius: 7px; font-size: 0.88rem; font-family: inherit; background: white; }
-select:focus, input:focus, textarea:focus { outline: none; border-color: #1e3a5f; box-shadow: 0 0 0 3px rgba(30,58,95,0.08); }
-.btn { padding: 0.45rem 1rem; border-radius: 7px; border: 1px solid #1e3a5f; background: #1e3a5f; color: white; cursor: pointer; font-size: 0.88rem; font-family: inherit; }
-.btn.outline { background: white; color: #1e3a5f; }
-.btn.danger { background: #fcebeb; border-color: #e24b4a; color: #a32d2d; }
-.btn.success { background: #eaf3de; border-color: #639922; color: #3b6d11; }
-.btn.sm { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
-.btn.xs { padding: 0.2rem 0.5rem; font-size: 0.78rem; }
-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-th { text-align: left; padding: 0.55rem 0.75rem; background: #f5f7fb; color: #555; font-weight: 600; font-size: 0.8rem; border-bottom: 1px solid #e2e6ed; }
-td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-.badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
-.badge.green { background: #eaf3de; color: #3b6d11; }
-.badge.red { background: #fcebeb; color: #a32d2d; }
-.badge.amber { background: #fef3e0; color: #854f0b; }
-.badge.blue { background: #e6f1fb; color: #0c447c; }
-.badge.purple { background: #f3eefb; color: #6b3fa0; }
-.badge.gray { background: #f1f1f1; color: #666; }
-.aanw-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #dde1e8; background: white; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; margin-right: 3px; }
-.aanw-btn.aanwezig { background: #eaf3de; border-color: #639922; }
-.aanw-btn.afwezig { background: #fcebeb; border-color: #e24b4a; }
-.aanw-btn.telaat { background: #fef3e0; border-color: #ef9f27; }
-.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
-.stat { background: #f5f7fb; border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid #e2e6ed; }
-.stat-label { font-size: 0.75rem; color: #888; margin-bottom: 3px; }
-.stat-value { font-size: 1.5rem; font-weight: 600; color: #1e3a5f; }
-.info-bar { background: #e6f1fb; border-left: 3px solid #378add; padding: 0.7rem 1rem; border-radius: 0 7px 7px 0; font-size: 0.85rem; color: #0c447c; margin-bottom: 1rem; }
-.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; }
-.modal-backdrop.open { display: flex; }
-.modal { background: white; border-radius: 12px; padding: 1.5rem; width: 520px; max-width: 96vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-.modal.wide { width: 680px; }
-.modal h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1.1rem; color: #1e3a5f; }
-.modal-footer { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid #f0f2f5; }
-.form-group { margin-bottom: 0.85rem; }
-.form-group label { display: block; font-size: 0.82rem; color: #555; font-weight: 500; margin-bottom: 4px; }
-.form-group input, .form-group select, .form-group textarea { width: 100%; }
-.taak-card { background: white; border-radius: 10px; border: 1px solid #e2e6ed; padding: 1.1rem 1.25rem; margin-bottom: 0.75rem; }
-.taak-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 1rem; margin-top: 0.85rem; }
-.taak-col-title { font-size: 0.78rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem; }
-.lln-tag { display: inline-flex; align-items: center; gap: 3px; background: #f5f7fb; border-radius: 12px; padding: 2px 8px; font-size: 0.8rem; margin: 2px; border: 1px solid #e2e6ed; }
-.lln-tag.oranje { background: #fef3e0; border-color: #ef9f27; }
-.lln-tag.groen { background: #eaf3de; border-color: #639922; }
-.lln-tag.paars { background: #f3eefb; border-color: #9b72d0; }
-.lln-tag button { border: none; background: none; cursor: pointer; color: #378add; font-size: 0.78rem; padding: 0 1px; }
-.progress-bar { height: 6px; background: #e2e6ed; border-radius: 3px; overflow: hidden; margin-top: 4px; }
-.progress-fill { height: 100%; background: #1e3a5f; border-radius: 3px; }
-.groep-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid #f0f2f5; }
-.groep-item:last-child { border-bottom: none; }
-.google-btn { display: inline-flex; align-items: center; gap: 8px; padding: 0.5rem 1.1rem; border: 1px solid #cdd2db; border-radius: 7px; background: white; cursor: pointer; font-size: 0.88rem; font-family: inherit; }
-.deadline-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #f5f5f5; font-size: 0.88rem; flex-wrap: wrap; }
-.deadline-row:last-child { border-bottom: none; }
-.opt-tekst { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.5rem; border: 1px solid #e2e6ed; border-radius: 7px; margin-bottom: 0.4rem; background: #fafbfd; }
-.opt-tekst textarea { flex: 1; border: none; background: transparent; font-size: 0.85rem; resize: vertical; font-family: inherit; }
-.opt-tekst textarea:focus { outline: none; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a1a;font-size:15px}
+header{background:#1e3a5f;color:white;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1rem;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+header h1{font-size:1.05rem;font-weight:500}
+header .spacer{flex:1}
+.hdr-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:white;padding:.3rem .8rem;border-radius:6px;cursor:pointer;font-size:.82rem;position:relative;font-family:inherit}
+.hdr-btn:hover{background:rgba(255,255,255,.25)}
+#deadline-badge{position:absolute;top:-5px;right:-5px;background:#e24b4a;color:white;border-radius:50%;width:17px;height:17px;font-size:.65rem;display:none;align-items:center;justify-content:center;font-weight:700}
+nav{background:white;border-bottom:1px solid #dde1e8;padding:0 1.5rem;display:flex}
+nav button{padding:.8rem 1.1rem;border:none;background:none;cursor:pointer;font-size:.88rem;color:#666;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit}
+nav button.active{color:#1e3a5f;border-bottom-color:#1e3a5f;font-weight:600}
+main{padding:1.5rem;max-width:1100px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.card{background:white;border-radius:10px;border:1px solid #e2e6ed;padding:1.25rem;margin-bottom:1rem}
+.row{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem}
+label.lbl{font-size:.82rem;color:#666}
+select,input[type=date],input[type=text],textarea{padding:.45rem .65rem;border:1px solid #cdd2db;border-radius:7px;font-size:.88rem;font-family:inherit;background:white}
+select:focus,input:focus,textarea:focus{outline:none;border-color:#1e3a5f;box-shadow:0 0 0 3px rgba(30,58,95,.08)}
+.btn{padding:.45rem 1rem;border-radius:7px;border:1px solid #1e3a5f;background:#1e3a5f;color:white;cursor:pointer;font-size:.88rem;font-family:inherit}
+.btn.outline{background:white;color:#1e3a5f}
+.btn.danger{background:#fcebeb;border-color:#e24b4a;color:#a32d2d}
+.btn.sm{padding:.3rem .7rem;font-size:.82rem}
+.btn.xs{padding:.2rem .5rem;font-size:.78rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{text-align:left;padding:.55rem .75rem;background:#f5f7fb;color:#555;font-weight:600;font-size:.8rem;border-bottom:1px solid #e2e6ed}
+td{padding:.5rem .75rem;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:12px;font-size:.78rem;font-weight:600;white-space:nowrap}
+.badge.green{background:#eaf3de;color:#3b6d11}.badge.red{background:#fcebeb;color:#a32d2d}
+.badge.amber{background:#fef3e0;color:#854f0b}.badge.blue{background:#e6f1fb;color:#0c447c}
+.badge.purple{background:#f3eefb;color:#6b3fa0}.badge.gray{background:#f1f1f1;color:#666}
+.aanw-btn{width:36px;height:36px;border-radius:50%;border:2px solid #dde1e8;background:white;cursor:pointer;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;margin-right:3px}
+.aanw-btn.aanwezig{background:#eaf3de;border-color:#639922}
+.aanw-btn.afwezig{background:#fcebeb;border-color:#e24b4a}
+.aanw-btn.telaat{background:#fef3e0;border-color:#ef9f27}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.25rem}
+.stat{background:#f5f7fb;border-radius:8px;padding:.75rem 1rem;border:1px solid #e2e6ed}
+.stat-label{font-size:.75rem;color:#888;margin-bottom:3px}
+.stat-value{font-size:1.5rem;font-weight:600;color:#1e3a5f}
+.info-bar{background:#e6f1fb;border-left:3px solid #378add;padding:.7rem 1rem;border-radius:0 7px 7px 0;font-size:.85rem;color:#0c447c;margin-bottom:1rem}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.modal{background:white;border-radius:12px;padding:1.5rem;width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.18)}
+.modal.wide{width:680px}
+.modal h3{font-size:1rem;font-weight:600;margin-bottom:1.1rem;color:#1e3a5f}
+.modal-footer{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem;padding-top:1rem;border-top:1px solid #f0f2f5}
+.fg{margin-bottom:.85rem}.fg label{display:block;font-size:.82rem;color:#555;font-weight:500;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%}
+.taak-card{background:white;border-radius:10px;border:1px solid #e2e6ed;padding:1.1rem 1.25rem;margin-bottom:.75rem}
+.taak-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:1rem;margin-top:.85rem}
+.col-title{font-size:.78rem;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem}
+.lln-tag{display:inline-flex;align-items:center;gap:3px;background:#f5f7fb;border-radius:12px;padding:2px 8px;font-size:.8rem;margin:2px;border:1px solid #e2e6ed}
+.lln-tag.oranje{background:#fef3e0;border-color:#ef9f27}
+.lln-tag.groen{background:#eaf3de;border-color:#639922}
+.lln-tag.paars{background:#f3eefb;border-color:#9b72d0}
+.progress-bar{height:6px;background:#e2e6ed;border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;background:#1e3a5f;border-radius:3px}
+.groep-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-bottom:1px solid #f0f2f5}
+.groep-item:last-child{border-bottom:none}
+.google-btn{display:inline-flex;align-items:center;gap:8px;padding:.5rem 1.1rem;border:1px solid #cdd2db;border-radius:7px;background:white;cursor:pointer;font-size:.88rem;font-family:inherit}
+.dl-row{display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid #f5f5f5;font-size:.88rem;flex-wrap:wrap}
+.dl-row:last-child{border-bottom:none}
+.opt-tekst{display:flex;align-items:flex-start;gap:.5rem;padding:.5rem;border:1px solid #e2e6ed;border-radius:7px;margin-bottom:.4rem;background:#fafbfd}
+.opt-tekst textarea{flex:1;border:none;background:transparent;font-size:.85rem;resize:vertical;font-family:inherit}
+.opt-tekst textarea:focus{outline:none}
 </style>
 </head>
 <body>
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal</h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.1</span></h1>
   <div class="spacer"></div>
-  <button class="hdr-btn" id="btn-deadlines" onclick="openDeadlineModal()">
-    🔔 Deadlines
-    <span id="deadline-badge"></span>
-  </button>
-  <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:0.5rem;">⚙ Instellingen</button>
+  <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
+  <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
 </header>
 
 <nav>
@@ -107,25 +97,25 @@ tr:last-child td { border-bottom: none; }
     <div class="row">
       <label class="lbl">Groep</label><select id="aanw-groep"></select>
       <label class="lbl">Datum</label><input type="date" id="aanw-datum">
-      <label class="lbl">Lesnaam</label><input type="text" id="aanw-lesnaam" placeholder="bv. H4 – kostprijsberekening" style="min-width:230px;">
+      <label class="lbl">Lesnaam</label><input type="text" id="aanw-lesnaam" placeholder="bv. H4 – kostprijsberekening" style="min-width:230px">
       <button class="btn sm" onclick="laadAanwezigheid()">Laden</button>
     </div>
   </div>
-  <div id="aanw-stats-row" class="stats-row" style="display:none">
+  <div id="aanw-stats" class="stats-row" style="display:none">
     <div class="stat"><div class="stat-label">Aanwezig</div><div class="stat-value" id="s-aanwezig">0</div></div>
     <div class="stat"><div class="stat-label">Afwezig</div><div class="stat-value" id="s-afwezig">0</div></div>
     <div class="stat"><div class="stat-label">Te laat</div><div class="stat-value" id="s-telaat">0</div></div>
     <div class="stat"><div class="stat-label">Niet ingegeven</div><div class="stat-value" id="s-leeg">0</div></div>
   </div>
   <div class="card">
-    <div id="aanw-leeg-msg" style="text-align:center;padding:2.5rem;color:#bbb;">Kies groep, datum en lesnaam → klik <strong>Laden</strong></div>
+    <div id="aanw-leeg" style="text-align:center;padding:2.5rem;color:#bbb">Kies groep, datum en lesnaam → klik <strong>Laden</strong></div>
     <table id="aanw-tabel" style="display:none">
       <thead><tr><th>#</th><th>Naam</th><th>Aanwezigheid</th><th>Opmerking</th></tr></thead>
       <tbody id="aanw-tbody"></tbody>
     </table>
-    <div id="aanw-opslaan-row" style="display:none;margin-top:1rem;gap:0.5rem;justify-content:flex-end;">
+    <div id="aanw-footer" style="display:none;margin-top:1rem;gap:.5rem;justify-content:flex-end">
       <button class="btn outline sm" onclick="allesAanwezig()">✓ Iedereen aanwezig</button>
-      <button class="btn sm" id="aanw-opslaan-btn" onclick="slaAanwezigheidOp()">💾 Opslaan</button>
+      <button class="btn sm" onclick="slaAanwezigheidOp()">💾 Opslaan</button>
     </div>
   </div>
 </div>
@@ -133,7 +123,7 @@ tr:last-child td { border-bottom: none; }
 <!-- TAKEN -->
 <div id="tab-taken" class="section">
   <div class="card">
-    <div class="row" style="margin-bottom:0;">
+    <div class="row" style="margin-bottom:0">
       <label class="lbl">Classroom</label>
       <select id="taken-klas" onchange="laadTaken()" style="min-width:240px">
         <option value="">— kies een klas —</option>
@@ -141,28 +131,23 @@ tr:last-child td { border-bottom: none; }
       <span id="taken-status" style="font-size:.82rem;color:#aaa"></span>
     </div>
   </div>
-  <div id="taken-sync-bar" style="display:none;" class="info-bar">⏳ Taken ophalen uit Classroom…</div>
-  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Kies een Classroom-klas hierboven</div></div>
+  <div id="taken-sync" class="info-bar" style="display:none">⏳ Taken ophalen…</div>
+  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas hierboven</div></div>
 </div>
 
 <!-- OVERZICHT -->
 <div id="tab-overzicht" class="section">
   <div class="row">
     <label class="lbl">Groep</label><select id="overzicht-groep" onchange="laadOverzicht()"></select>
-    <label class="lbl">Toon</label>
-    <select id="overzicht-modus" onchange="laadOverzicht()">
-      <option value="aanwezigheid">Aanwezigheid</option>
-      <option value="taken">Taken</option>
-    </select>
   </div>
-  <div id="overzicht-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een groep</div></div>
+  <div id="overzicht-container"><div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een groep</div></div>
 </div>
 
 <!-- INSTELLINGEN -->
 <div id="tab-instellingen" class="section">
-  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin-bottom:0.75rem;">Groepen beheren</h2>
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin-bottom:.75rem">Groepen beheren</h2>
   <div class="card">
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
       <button class="btn sm outline" onclick="openGroepModal()">+ Groep toevoegen</button>
       <button class="btn sm outline" onclick="openSamenvoegenModal()">🔀 Klassen samenvoegen</button>
       <button class="btn sm outline" onclick="openSubgroepModal()">✂ Subgroep aanmaken</button>
@@ -170,79 +155,63 @@ tr:last-child td { border-bottom: none; }
     <div id="groepen-lijst"></div>
   </div>
 
-  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 0.75rem;">Mail-instellingen</h2>
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Mail-instellingen</h2>
   <div class="card">
-    <div class="info-bar">Gebruik <code>{voornaam}</code>, <code>{taaknaam}</code>, <code>{deadline}</code>, <code>{nieuwe_deadline}</code> als plaatshouders. Na het opstellen kopieer je de tekst naar jouw eigen mailprogramma.</div>
-
-    <div style="font-weight:600;font-size:0.9rem;color:#1e3a5f;margin-bottom:0.4rem;">📘 Boekhouden (Kern 2+3) — vaste tekst</div>
-    <textarea id="mail-template-boekh" rows="8" style="width:100%;font-family:inherit;font-size:0.85rem;margin-bottom:1rem;"></textarea>
-
-    <div style="font-weight:600;font-size:0.9rem;color:#1e3a5f;margin-bottom:0.4rem;">📗 Kern 6+8 — openingstekst</div>
-    <textarea id="mail-template-kern68-basis" rows="4" style="width:100%;font-family:inherit;font-size:0.85rem;margin-bottom:1rem;"></textarea>
-
-    <div style="font-weight:600;font-size:0.9rem;color:#1e3a5f;margin-bottom:0.4rem;">📗 Kern 6+8 — optionele teksten (aanvinkbaar bij versturen)</div>
-    <div id="opt-teksten-lijst"></div>
-    <button class="btn sm outline" onclick="voegOptTekstToe()" style="margin-bottom:1rem;">+ Tekst toevoegen</button>
-
-    <div style="font-weight:600;font-size:0.9rem;color:#1e3a5f;margin-bottom:0.4rem;">📗 Kern 6+8 — slottekst (altijd toegevoegd)</div>
-    <textarea id="mail-template-kern68-slot" rows="4" style="width:100%;font-family:inherit;font-size:0.85rem;margin-bottom:1rem;"></textarea>
-
+    <div class="info-bar">Gebruik <code>{voornaam}</code>, <code>{taaknaam}</code>, <code>{deadline}</code>, <code>{nieuwe_deadline}</code> als plaatshouders.</div>
+    <div style="font-weight:600;font-size:.9rem;color:#1e3a5f;margin-bottom:.4rem">📘 Boekhouden — vaste tekst</div>
+    <textarea id="mail-boekh" rows="8" style="width:100%;font-family:inherit;font-size:.85rem;margin-bottom:1rem"></textarea>
+    <div style="font-weight:600;font-size:.9rem;color:#1e3a5f;margin-bottom:.4rem">📗 Kern 6+8 — openingstekst</div>
+    <textarea id="mail-basis" rows="4" style="width:100%;font-family:inherit;font-size:.85rem;margin-bottom:1rem"></textarea>
+    <div style="font-weight:600;font-size:.9rem;color:#1e3a5f;margin-bottom:.4rem">📗 Kern 6+8 — optionele teksten</div>
+    <div id="opt-lijst"></div>
+    <button class="btn sm outline" onclick="voegOptToe()" style="margin-bottom:1rem">+ Tekst toevoegen</button>
+    <div style="font-weight:600;font-size:.9rem;color:#1e3a5f;margin-bottom:.4rem">📗 Kern 6+8 — slottekst</div>
+    <textarea id="mail-slot" rows="4" style="width:100%;font-family:inherit;font-size:.85rem;margin-bottom:1rem"></textarea>
     <button class="btn sm" onclick="slaMailOp()">💾 Opslaan</button>
   </div>
 
-  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 0.75rem;">Google Classroom koppeling</h2>
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Google Classroom</h2>
   <div class="card">
     <div class="info-bar">🔒 Leerlinggegevens worden enkel in jouw browser geladen.</div>
-    <div id="google-status-blok">
+    <div id="google-uit">
       <button class="google-btn" onclick="koppelGoogle()">
         <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Aanmelden met Google
       </button>
     </div>
-    <div id="google-verbonden-blok" style="display:none">
+    <div id="google-aan" style="display:none">
       <span class="badge green">✓ Verbonden</span>
-      <p id="google-gebruiker" style="font-size:0.88rem;margin:0.75rem 0;color:#555;"></p>
-      <button class="btn sm outline" onclick="importeerClassroom()">🔄 Importeren</button>
-      <button class="btn sm danger" onclick="ontkoppelGoogle()" style="margin-left:0.5rem;">Ontkoppelen</button>
+      <p id="google-naam" style="font-size:.88rem;margin:.75rem 0;color:#555"></p>
+      <button class="btn sm outline" onclick="importeerClassroom()">🔄 Groepen &amp; klassen importeren</button>
+      <button class="btn sm danger" onclick="ontkoppelGoogle()" style="margin-left:.5rem">Ontkoppelen</button>
     </div>
   </div>
 
-  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 0.75rem;">Data beheren</h2>
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Data</h2>
   <div class="card">
-    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-      <button class="btn sm outline" onclick="exporteerData()">⬇ Exporteer (JSON)</button>
-      <button class="btn sm danger" onclick="resetData()">⚠ Alles wissen</button>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn sm outline" onclick="exporteer()">⬇ Exporteer (JSON)</button>
+      <button class="btn sm danger" onclick="resetAlles()">⚠ Alles wissen</button>
     </div>
   </div>
 </div>
-
 </main>
 
 <!-- MODAL: GROEP -->
 <div class="modal-backdrop" id="modal-groep">
   <div class="modal">
-    <h3 id="groep-modal-titel">Groep toevoegen</h3>
-    <div class="form-group">
-      <label>Naam</label>
-      <input type="text" id="groep-naam" placeholder="bv. Boekhouden 4">
-    </div>
-    <div class="form-group">
-      <label>Type (bepaalt taaklogica en mailtemplate)</label>
-      <select id="groep-type">
-        <option value="boekhouden">📘 Boekhouden (Kern 2+3) — iedereen krijgt taken, vaste mail</option>
+    <h3 id="groep-titel">Groep toevoegen</h3>
+    <div class="fg"><label>Naam</label><input type="text" id="g-naam"></div>
+    <div class="fg"><label>Type</label>
+      <select id="g-type">
+        <option value="boekhouden">📘 Boekhouden — iedereen krijgt taken, vaste mail</option>
         <option value="kern68">📗 Kern 6+8 — aanwezigheidsfilter, aanpasbare mail</option>
         <option value="andere">📙 Andere kernen — aanwezigheidsfilter, geen mail</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>Leerlingen — één per lijn (Voornaam Achternaam)</label>
-      <textarea id="groep-leerlingen" rows="7" placeholder="Jan Janssen&#10;Marie Peeters" style="font-size:0.85rem;"></textarea>
-    </div>
-    <div class="form-group">
-      <label>Coach per leerling (zelfde volgorde — naam of e-mail)</label>
-      <textarea id="groep-coaches" rows="7" placeholder="coach.a@school.be&#10;coach.b@school.be" style="font-size:0.85rem;"></textarea>
-    </div>
-    <input type="hidden" id="groep-edit-id">
+    <div class="fg"><label>Leerlingen (één per lijn)</label><textarea id="g-leerlingen" rows="7" style="font-size:.85rem"></textarea></div>
+    <div class="fg"><label>Coach per leerling (zelfde volgorde)</label><textarea id="g-coaches" rows="7" style="font-size:.85rem"></textarea></div>
+    <input type="hidden" id="g-id">
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluit('modal-groep')">Annuleren</button>
       <button class="btn sm" onclick="slaGroepOp()">Opslaan</button>
@@ -250,16 +219,14 @@ tr:last-child td { border-bottom: none; }
   </div>
 </div>
 
-<!-- taak modal verwijderd -->
-
-<!-- MODAL: NA OPSLAAN -->
+<!-- MODAL: NA OPSLAAN AANWEZIGHEID -->
 <div class="modal-backdrop" id="modal-na-opslaan">
   <div class="modal">
     <h3>✅ Aanwezigheid opgeslagen!</h3>
-    <p style="font-size:.88rem;color:#555;margin-bottom:.75rem">Wil je een deadline-taak aanmaken voor deze les? (optioneel — voor de 🔔 deadline-waarschuwingen)</p>
+    <p style="font-size:.88rem;color:#555;margin-bottom:.75rem">Wil je een deadline-taak aanmaken voor de 🔔 waarschuwingen? (optioneel)</p>
     <div id="na-les-info" style="font-weight:600;margin-bottom:1rem;color:#1e3a5f"></div>
-    <div class="form-group"><label>Naam van de taak</label><input type="text" id="na-taak-naam" placeholder="bv. Oefeningen H4 — leeg laten om over te slaan"></div>
-    <div class="form-group"><label>Deadline</label><input type="date" id="na-taak-deadline"></div>
+    <div class="fg"><label>Naam van de taak (leeg = overslaan)</label><input type="text" id="na-naam" placeholder="bv. Oefeningen H4"></div>
+    <div class="fg"><label>Deadline</label><input type="date" id="na-deadline"></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluit('modal-na-opslaan')">Sluiten</button>
       <button class="btn sm" onclick="slaaTaakOp()">Taak aanmaken</button>
@@ -271,170 +238,245 @@ tr:last-child td { border-bottom: none; }
 <div class="modal-backdrop" id="modal-deadlines">
   <div class="modal wide">
     <h3>🔔 Deadline-waarschuwingen</h3>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Leerlingen die de eerste inlevering gemist hebben. Vink aan wie een mail krijgt.</p>
-    <div id="deadline-inhoud"></div>
+    <p style="font-size:.85rem;color:#666;margin-bottom:1rem">Leerlingen die de eerste inlevering gemist hebben.</p>
+    <div id="dl-inhoud"></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluit('modal-deadlines')">Sluiten</button>
-      <button class="btn sm" onclick="stuurGeselecteerdeMails()">✉ Teksten opstellen</button>
+      <button class="btn sm" onclick="stuurMails()">✉ Teksten opstellen</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: MAIL PREVIEW -->
+<!-- MODAL: MAIL -->
 <div class="modal-backdrop" id="modal-mail">
   <div class="modal wide">
-    <h3>✉ Mailtekst voor <span id="mail-preview-naam"></span></h3>
-    <div class="form-group">
-      <label>Nieuwe deadline</label>
-      <input type="date" id="mail-nieuwe-deadline" oninput="updateMailPreview()">
+    <h3>✉ Mailtekst voor <span id="mail-naam"></span></h3>
+    <div class="fg"><label>Nieuwe deadline</label><input type="date" id="mail-nd" oninput="updateMail()"></div>
+    <div id="kern68-opties" style="display:none;margin-bottom:.75rem">
+      <div style="font-size:.82rem;font-weight:600;color:#555;margin-bottom:.4rem">Optionele teksten:</div>
+      <div id="kern68-opt-lijst"></div>
     </div>
-    <div id="kern68-opties-blok" style="display:none;margin-bottom:0.75rem;">
-      <div style="font-size:0.82rem;font-weight:600;color:#555;margin-bottom:0.4rem;">Optionele teksten aanvinken:</div>
-      <div id="kern68-opties-lijst"></div>
-    </div>
-    <div style="font-size:0.82rem;font-weight:600;color:#555;margin-bottom:0.4rem;">Voorbeeld:</div>
-    <div id="mail-preview-tekst" style="background:#f5f7fb;border:1px solid #e2e6ed;border-radius:7px;padding:1rem;font-size:0.85rem;white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6;"></div>
-    <div style="margin-top:0.75rem;font-size:0.82rem;color:#888;">👤 Coach: <span id="mail-preview-to"></span></div>
+    <div style="font-size:.82rem;font-weight:600;color:#555;margin-bottom:.4rem">Voorbeeld:</div>
+    <div id="mail-tekst" style="background:#f5f7fb;border:1px solid #e2e6ed;border-radius:7px;padding:1rem;font-size:.85rem;white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6"></div>
+    <div style="margin-top:.75rem;font-size:.82rem;color:#888">👤 Coach: <span id="mail-coach"></span></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluit('modal-mail')">Annuleren</button>
-      <button class="btn sm" id="btn-kopieer-mail" onclick="kopieerMailTekst()">📋 Kopiëren</button>
+      <button class="btn sm" id="btn-kopi" onclick="kopieer()">📋 Kopiëren</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SAMENVOEGEN -->
+<div class="modal-backdrop" id="modal-samen">
+  <div class="modal wide">
+    <h3>🔀 Klassen samenvoegen</h3>
+    <div class="fg"><label>Naam nieuwe groep</label><input type="text" id="samen-naam"></div>
+    <div class="fg"><label>Type</label>
+      <select id="samen-type">
+        <option value="andere">📙 Andere kernen</option>
+        <option value="kern68">📗 Kern 6+8</option>
+        <option value="boekhouden">📘 Boekhouden</option>
+      </select>
+    </div>
+    <div class="fg"><label>Klassen</label>
+      <div id="samen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:.5rem;max-height:280px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn outline sm" onclick="sluit('modal-samen')">Annuleren</button>
+      <button class="btn sm" onclick="voerSamenvoegen()">Samenvoegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SUBGROEP -->
+<div class="modal-backdrop" id="modal-sub">
+  <div class="modal wide">
+    <h3>✂ Subgroep aanmaken</h3>
+    <div class="fg"><label>Naam</label><input type="text" id="sub-naam"></div>
+    <div class="fg"><label>Type</label>
+      <select id="sub-type">
+        <option value="boekhouden">📘 Boekhouden</option>
+        <option value="kern68">📗 Kern 6+8</option>
+        <option value="andere">📙 Andere kernen</option>
+      </select>
+    </div>
+    <div class="fg"><label>Bronklassen</label>
+      <div id="sub-bron" style="border:1px solid #e2e6ed;border-radius:7px;padding:.5rem;margin-bottom:.75rem"></div>
+    </div>
+    <div class="fg"><label>Leerlingen aanvinken</label>
+      <div id="sub-lln" style="border:1px solid #e2e6ed;border-radius:7px;padding:.5rem;max-height:300px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn outline sm" onclick="sluit('modal-sub')">Annuleren</button>
+      <button class="btn sm" onclick="voerSubgroep()">Aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT -->
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal wide">
+    <h3>📥 Importeren uit Google Classroom</h3>
+    <p style="font-size:.85rem;color:#666;margin-bottom:.5rem">Kies welke klassen je wil importeren als portaalgroep.</p>
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;flex-wrap:wrap">
+      <button class="btn xs outline" onclick="document.querySelectorAll('#imp-lijst input[type=checkbox]').forEach(c=>c.checked=true)">Alles selecteren</button>
+      <button class="btn xs outline" onclick="document.querySelectorAll('#imp-lijst input[type=checkbox]').forEach(c=>c.checked=false)">Alles deselecteren</button>
+      <button class="btn xs outline" onclick="selecteerBestaande()">↻ Enkel bestaande bijwerken</button>
+    </div>
+    <div id="imp-lijst"></div>
+    <div class="modal-footer">
+      <button class="btn outline sm" onclick="sluit('modal-import')">Annuleren</button>
+      <button class="btn sm" onclick="voerImport()">✅ Importeren</button>
     </div>
   </div>
 </div>
 
 <script>
-// DATA
-const STORAGE_KEY = 'lkr_portaal_v3';
-let db = JSON.parse(localStorage.getItem(STORAGE_KEY) || JSON.stringify({
-  groepen: [], aanwezigheden: {}, taken: [],
-  mail: {
-    templateBoekhouden: `Beste {voornaam},\n\nDe deadline voor de taak "{taaknaam}" was {deadline}. Om het traject van boekhouden tot een goed einde te kunnen brengen, is het belangrijk dat je de taken bijhoudt.\n\nNieuwe deadline: {nieuwe_deadline}.\n\nIndien je hulp nodig hebt, kom langs in een vragenmoment. Als geen enkel vragenmoment past, laat mij dat dan ook weten. Ik maak met plezier tijd voor je vrij als je een seintje geeft.\n\nLaat het niet opstapelen. Succes!`,
-    templateKern68Basis: `Beste {voornaam},\n\nDe deadline voor de taak "{taaknaam}" was {deadline}.\n\nNieuwe deadline: {nieuwe_deadline}.`,
-    templateKern68Slot: `\n\nIndien je hulp nodig hebt, kom langs in een vragenmoment. Als geen enkel vragenmoment past, laat mij dat dan ook weten. Ik maak met plezier tijd voor je vrij als je een seintje geeft.\n\nSucces!`,
-    optioneleTeksten: [`Als je de taak niet indient tegen de voorziene datum ({nieuwe_deadline}), kun je de test jezelf niet maken op het voorziene tijdstip.`]
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const KEY = 'lkr_v4';
+
+const MAIL_DEFAULT = {
+  boekh: `Beste {voornaam},\n\nDe deadline voor de taak "{taaknaam}" was {deadline}. Om het traject van boekhouden tot een goed einde te kunnen brengen, is het belangrijk dat je de taken bijhoudt.\n\nNieuwe deadline: {nieuwe_deadline}.\n\nIndien je hulp nodig hebt, kom langs in een vragenmoment. Als geen enkel vragenmoment past, laat mij dat dan ook weten. Ik maak met plezier tijd voor je vrij als je een seintje geeft.\n\nLaat het niet opstapelen. Succes!`,
+  basis: `Beste {voornaam},\n\nDe deadline voor de taak "{taaknaam}" was {deadline}.\n\nNieuwe deadline: {nieuwe_deadline}.`,
+  slot: `\n\nIndien je hulp nodig hebt, kom langs in een vragenmoment. Als geen enkel vragenmoment past, laat mij dat dan ook weten. Ik maak met plezier tijd voor je vrij als je een seintje geeft.\n\nSucces!`,
+  opties: [`Als je de taak niet indient tegen de voorziene datum ({nieuwe_deadline}), kun je de test jezelf niet maken op het voorziene tijdstip.`]
+};
+
+function laadDb() {
+  // Probeer nieuwe sleutel, dan migreer van oude
+  const nieuw = localStorage.getItem(KEY);
+  if (nieuw) return JSON.parse(nieuw);
+  const oud = localStorage.getItem('lkr_portaal_v3') || localStorage.getItem('lkr_portaal_v2');
+  if (oud) {
+    const d = JSON.parse(oud);
+    // Migreer mail structuur
+    if (!d.mail || d.mail.templateBoekhouden !== undefined) {
+      const m = d.mail || {};
+      d.mail = {
+        boekh: m.templateBoekhouden || MAIL_DEFAULT.boekh,
+        basis: m.templateKern68Basis || MAIL_DEFAULT.basis,
+        slot: m.templateKern68Slot || MAIL_DEFAULT.slot,
+        opties: m.optioneleTeksten || MAIL_DEFAULT.opties
+      };
+    }
+    if (!d.classroomKlassen) d.classroomKlassen = [];
+    if (!d.taken) d.taken = [];
+    localStorage.setItem(KEY, JSON.stringify(d));
+    console.log('✓ Data gemigreerd naar v4');
+    return d;
   }
-}));
+  return { groepen:[], aanwezigheden:{}, taken:[], classroomKlassen:[], mail: {...MAIL_DEFAULT} };
+}
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+let db = laadDb();
+function save() { localStorage.setItem(KEY, JSON.stringify(db)); }
 
-let lesCtx = null; // context van laatste opgeslagen les
-let mailCtx = null; // context van huidige mail preview
-
-// TABS
+// ── TABS ──────────────────────────────────────────────────────────────────────
 function showTab(naam, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + naam).classList.add('active');
-  if (btn) btn.classList.add('active');
-  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: vulTakenKlassen, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
+  btn?.classList.add('active');
+  ({ aanwezigheid: () => vulDD('aanw-groep'),
+     taken: vulTakenKlassen,
+     overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); },
+     instellingen: laadInstellingen })[naam]?.();
 }
 
-// DROPDOWNS
 function vulDD(id, sel) {
   const el = document.getElementById(id); if (!el) return;
   const cur = sel ?? el.value;
-  el.innerHTML = db.groepen.length === 0 ? '<option value="">— Eerst een groep aanmaken in Instellingen —</option>' : db.groepen.map(g => `<option value="${g.id}">${g.naam}</option>`).join('');
+  el.innerHTML = db.groepen.length
+    ? db.groepen.map(g => `<option value="${g.id}">${g.naam}</option>`).join('')
+    : '<option value="">— voeg eerst een groep toe —</option>';
   if (cur) el.value = cur;
 }
 
-
-// AANWEZIGHEID
+// ── AANWEZIGHEID ──────────────────────────────────────────────────────────────
 function laadAanwezigheid() {
   const gid = document.getElementById('aanw-groep').value;
   const datum = document.getElementById('aanw-datum').value;
   const les = document.getElementById('aanw-lesnaam').value.trim();
   const groep = db.groepen.find(g => g.id == gid);
-  const leeg = document.getElementById('aanw-leeg-msg');
-  const tabel = document.getElementById('aanw-tabel');
-  const row = document.getElementById('aanw-opslaan-row');
-  const stats = document.getElementById('aanw-stats-row');
-
-  if (!groep || !datum || !les) {
-    leeg.style.display = 'block'; tabel.style.display = 'none'; row.style.display = 'none'; stats.style.display = 'none'; return;
-  }
-  const key = gid + '|' + datum + '|' + les;
+  if (!groep || !datum || !les) { toonLeeg(); return; }
+  const key = `${gid}|${datum}|${les}`;
   const opg = db.aanwezigheden[key] || {};
-  leeg.style.display = 'none'; tabel.style.display = 'table'; row.style.display = 'flex'; stats.style.display = 'grid';
+  document.getElementById('aanw-leeg').style.display = 'none';
+  document.getElementById('aanw-tabel').style.display = 'table';
+  document.getElementById('aanw-footer').style.display = 'flex';
+  document.getElementById('aanw-stats').style.display = 'grid';
   let a=0,af=0,tl=0,l=0;
   document.getElementById('aanw-tbody').innerHTML = groep.leerlingen.map((naam,i) => {
-    const s = opg[naam]?.status || ''; const opm = opg[naam]?.opmerking || '';
+    const s = opg[naam]?.status||'', opm = opg[naam]?.opmerking||'';
     if(s==='aanwezig')a++; else if(s==='afwezig')af++; else if(s==='telaat')tl++; else l++;
     return `<tr><td style="color:#ccc;width:28px">${i+1}</td><td style="font-weight:500">${naam}</td>
     <td><button class="aanw-btn ${s==='aanwezig'?'aanwezig':''}" onclick="togAanw('${key}','${naam}','aanwezig')">✓</button>
         <button class="aanw-btn ${s==='afwezig'?'afwezig':''}" onclick="togAanw('${key}','${naam}','afwezig')">✕</button>
         <button class="aanw-btn ${s==='telaat'?'telaat':''}" onclick="togAanw('${key}','${naam}','telaat')">⏱</button></td>
-    <td><input type="text" value="${opm}" placeholder="opmerking…" onchange="setOpm('${key}','${naam}',this.value)" style="border:none;background:transparent;font-size:0.84rem;color:#666;outline:none;width:100%;"></td></tr>`;
+    <td><input type="text" value="${opm}" placeholder="opmerking…" onchange="setOpm('${key}','${naam}',this.value)" style="border:none;background:transparent;font-size:.84rem;color:#666;outline:none;width:100%"></td></tr>`;
   }).join('');
   ['s-aanwezig','s-afwezig','s-telaat','s-leeg'].forEach((id,i) => document.getElementById(id).textContent=[a,af,tl,l][i]);
 }
-
-function togAanw(key, naam, status) {
-  if (!db.aanwezigheden[key]) db.aanwezigheden[key] = {};
+function toonLeeg() {
+  document.getElementById('aanw-leeg').style.display='block';
+  document.getElementById('aanw-tabel').style.display='none';
+  document.getElementById('aanw-footer').style.display='none';
+  document.getElementById('aanw-stats').style.display='none';
+}
+function togAanw(key, naam, s) {
+  if(!db.aanwezigheden[key]) db.aanwezigheden[key]={};
   const h = db.aanwezigheden[key][naam]?.status;
-  db.aanwezigheden[key][naam] = {...(db.aanwezigheden[key][naam]||{}), status: h===status?'':status};
+  db.aanwezigheden[key][naam] = {...(db.aanwezigheden[key][naam]||{}), status: h===s?'':s};
   save(); laadAanwezigheid();
 }
 function setOpm(key, naam, v) {
-  if (!db.aanwezigheden[key]) db.aanwezigheden[key] = {};
-  db.aanwezigheden[key][naam] = {...(db.aanwezigheden[key][naam]||{}), opmerking: v}; save();
+  if(!db.aanwezigheden[key]) db.aanwezigheden[key]={};
+  db.aanwezigheden[key][naam] = {...(db.aanwezigheden[key][naam]||{}), opmerking:v}; save();
 }
 function allesAanwezig() {
   const gid=document.getElementById('aanw-groep').value, datum=document.getElementById('aanw-datum').value, les=document.getElementById('aanw-lesnaam').value.trim();
   const groep=db.groepen.find(g=>g.id==gid); if(!groep||!datum||!les)return;
-  const key=gid+'|'+datum+'|'+les; if(!db.aanwezigheden[key])db.aanwezigheden[key]={};
-  groep.leerlingen.forEach(naam=>{ db.aanwezigheden[key][naam]={...(db.aanwezigheden[key][naam]||{}),status:'aanwezig'}; });
+  const key=`${gid}|${datum}|${les}`; if(!db.aanwezigheden[key])db.aanwezigheden[key]={};
+  groep.leerlingen.forEach(n=>{db.aanwezigheden[key][n]={...(db.aanwezigheden[key][n]||{}),status:'aanwezig'};});
   save(); laadAanwezigheid();
 }
 function slaAanwezigheidOp() {
   const gid=document.getElementById('aanw-groep').value, datum=document.getElementById('aanw-datum').value, les=document.getElementById('aanw-lesnaam').value.trim();
   if(!gid||!datum||!les)return;
   save();
-  lesCtx = {gid, datum, les, key: gid+'|'+datum+'|'+les};
   window._lesCtx={gid,datum,les,key:`${gid}|${datum}|${les}`};
-  document.getElementById('na-les-info').textContent = `📌 ${les} — ${datum}`;
-  document.getElementById('na-taak-naam').value='';
-  document.getElementById('na-taak-deadline').value='';
+  document.getElementById('na-les-info').textContent=`📌 ${les} — ${datum}`;
+  document.getElementById('na-naam').value='';
+  document.getElementById('na-deadline').value='';
   document.getElementById('modal-na-opslaan').classList.add('open');
 }
-// koppelTaakAanLes verwijderd
-
-// TAKEN
-// Vertaal Classroom-status naar portaalstatus
-function classroomNaarPortaalStatus(sub) {
-  // sub = submission object van Classroom API
-  if (!sub) return 'niet_ingediend';
-  const s = sub.state;
-  if (s === 'TURNED_IN') return 'ingediend';
-  if (s === 'RETURNED') {
-    // Teruggegeven met score = afgerond, zonder score = remediering
-    const score = sub.assignedGrade;
-    if (score !== undefined && score !== null) return 'afgerond';
-    return 'remediering';
-  }
-  return 'niet_ingediend'; // NEW, CREATED, RECLAIMED_BY_STUDENT
+function slaaTaakOp() {
+  const naam=document.getElementById('na-naam').value.trim();
+  if(!naam){sluit('modal-na-opslaan');return;}
+  const deadline=document.getElementById('na-deadline').value;
+  const ctx=window._lesCtx; if(!ctx)return;
+  const groep=db.groepen.find(g=>g.id==ctx.gid);
+  let toegewezen=[];
+  if(groep?.type==='boekhouden'){toegewezen=groep.leerlingen||[];}
+  else{const aanw=db.aanwezigheden[ctx.key]||{};toegewezen=(groep?.leerlingen||[]).filter(n=>['aanwezig','telaat'].includes(aanw[n]?.status));}
+  db.taken.push({id:Date.now(),naam,deadline,gid:ctx.gid,toegewezen,statussen:{}});
+  save(); sluit('modal-na-opslaan');
 }
 
+// ── TAKEN (CLASSROOM) ─────────────────────────────────────────────────────────
 function vulTakenKlassen() {
   const sel = document.getElementById('taken-klas');
-  const cur = sel.value;
-
-  // classroomKlassen worden opgeslagen bij importeren
-  // Als die leeg zijn: toon melding
   const klassen = db.classroomKlassen || [];
-  if(!klassen.length){
-    sel.innerHTML='<option value="">— importeer eerst via Instellingen —</option>';
-    document.getElementById('taken-container').innerHTML='<div style="text-align:center;padding:2rem;color:#aaa">Ga naar ⚙ Instellingen → Google Classroom → Importeren</div>';
+  const cur = sel.value;
+  if (!klassen.length) {
+    sel.innerHTML = '<option value="">— importeer eerst via Instellingen —</option>';
+    document.getElementById('taken-container').innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa">Ga naar ⚙ Instellingen → Google Classroom → Importeren</div>';
     return;
   }
-  sel.innerHTML='<option value="">— kies een klas —</option>'+klassen.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
-  if(cur) sel.value=cur;
-
-  // Token automatisch ophalen als localStorage verbonden zegt maar token leeg is
-  if(!googleToken && localStorage.getItem('lkr_google')==='1') {
-    document.getElementById('taken-sync').style.display='block';
-    document.getElementById('taken-sync').textContent='⏳ Verbinding herstellen…';
-    koppelGoogle(false);
-  }
+  sel.innerHTML = '<option value="">— kies een klas —</option>' + klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+  if (cur) sel.value = cur;
+  // Als token leeg maar was verbonden: haal token op
+  if (!googleToken && localStorage.getItem('lkr_google') === '1') koppelGoogle();
 }
 
 async function laadTaken() {
@@ -442,64 +484,60 @@ async function laadTaken() {
   const cont = document.getElementById('taken-container');
   const sync = document.getElementById('taken-sync');
   const status = document.getElementById('taken-status');
-  if(!klasId){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas</div>';return;}
+  if (!klasId) { cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas hierboven</div>'; return; }
 
-  // Token niet beschikbaar — probeer automatisch aan te melden
-  if(!googleToken) {
-    if(localStorage.getItem('lkr_google')==='1') {
-      // Was eerder verbonden — haal token opnieuw op
-      sync.style.display='block'; sync.textContent='⏳ Verbinding herstellen…';
-      cont.innerHTML='';
-      koppelGoogle(true); // true = herlaad taken na aanmelden
+  if (!googleToken) {
+    if (localStorage.getItem('lkr_google') === '1') {
+      sync.style.display = 'block'; sync.textContent = '⏳ Verbinding herstellen…';
+      await new Promise(r => { window._naToken = () => { r(); laadTaken(); }; koppelGoogle(); });
       return;
     }
-    cont.innerHTML='<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelEnHerlaad()">Aanmelden met Google</button></div>';
-    sync.style.display='none'; return;
+    cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    return;
   }
 
-  sync.style.display='block'; sync.textContent='⏳ Taken ophalen…'; cont.innerHTML=''; status.textContent='';
+  sync.style.display = 'block'; sync.textContent = '⏳ Taken ophalen…'; cont.innerHTML = ''; status.textContent = '';
 
   try {
-    // Gebruiker-ID voor filter op eigen taken
-    if(!window._mijnUserId){
+    // Eigen userId ophalen (éénmalig)
+    if (!window._mijnUserId) {
       const me = await gFetch('https://www.googleapis.com/oauth2/v3/userinfo');
       window._mijnUserId = me.sub;
     }
 
-    // Taken ophalen
-    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
-    const alleTaken = takenData.courseWork || [];
-    // Haal topics op voor filter
+    // Topics ophalen
     let topicsMap = {};
     try {
-      const topicsData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/topics?pageSize=100`);
-      (topicsData.topic||[]).forEach(t => topicsMap[t.topicId] = t.name);
-    } catch(e) { /* topics ophalen mislukt — geen filter */ }
+      const td = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/topics?pageSize=100`);
+      (td.topic||[]).forEach(t => topicsMap[t.topicId] = t.name);
+    } catch(e) {}
 
-    // Filter op eigen taken via creatorUserId
+    // Taken ophalen
+    sync.textContent = '⏳ Taken laden…';
+    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
+    const alleTaken = takenData.courseWork || [];
+
+    // Filter op eigen taken
     let mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
     const gefiltered = mijnTaken.length > 0;
 
-    // Debug info tonen
-    const debugInfo = `Gevonden: ${alleTaken.length} taken totaal, ${mijnTaken.length} van jou (ID: ${window._mijnUserId}). Topics: ${JSON.stringify(Object.values(topicsMap))}`;
-    console.log(debugInfo);
-
-    if(!mijnTaken.length){
-      // Toon debug info zodat we kunnen zien wat er misloopt
-      sync.style.display='none';
-      const uniekeCreators = [...new Set(alleTaken.map(t=>t.creatorUserId))];
-      cont.innerHTML=`<div style="background:#fef3e0;border:1px solid #ef9f27;border-radius:10px;padding:1rem;font-size:.85rem;">
-        <strong>⚠ Geen taken van jou gevonden.</strong><br><br>
-        Jouw gebruikers-ID: <code>${window._mijnUserId}</code><br>
-        Makers van taken in deze klas: <code>${uniekeCreators.join(', ')}</code><br><br>
-        Topics in deze klas: <strong>${Object.values(topicsMap).join(', ')||'geen'}</strong><br><br>
-        <span style="color:#666">Kopieer deze info en stuur ze door zodat we het filter kunnen instellen.</span>
+    if (!mijnTaken.length) {
+      // Debug info tonen
+      const makers = [...new Set(alleTaken.map(t => t.creatorUserId))];
+      const topics = Object.values(topicsMap);
+      sync.style.display = 'none';
+      cont.innerHTML = `<div style="background:#fef3e0;border:1px solid #ef9f27;border-radius:10px;padding:1rem;font-size:.85rem">
+        <strong>⚠ Geen taken van jou gevonden (${alleTaken.length} taken in totaal).</strong><br><br>
+        Jouw ID: <code style="font-size:.8rem">${window._mijnUserId}</code><br>
+        Makers in deze klas: <code style="font-size:.8rem">${makers.join(', ')}</code><br><br>
+        Topics: <strong>${topics.join(', ')||'geen'}</strong><br><br>
+        <span style="color:#666">Kopieer dit en stuur het door zodat het filter ingesteld kan worden.</span>
       </div>`;
       return;
     }
 
     // Roster
-    sync.textContent=`⏳ Statussen laden voor ${mijnTaken.length} taken…`;
+    sync.textContent = `⏳ Statussen laden…`;
     const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`);
     const students = rosterData.students || [];
     const uidNaam = {};
@@ -508,36 +546,35 @@ async function laadTaken() {
     // Inzendingen parallel
     const alleSubs = await Promise.all(mijnTaken.map(t =>
       gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=100`)
-        .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
+        .then(d => ({ tid: t.id, subs: d.studentSubmissions||[] }))
     ));
     const subMap = {};
     alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
 
     const vertaal = sub => {
-      if(!sub||sub.state==='NEW'||sub.state==='CREATED') return 'niet_ingediend';
-      if(sub.state==='TURNED_IN') return 'ingediend';
-      if(sub.state==='RETURNED') return sub.assignedGrade!=null ? 'afgerond' : 'remediering';
+      if (!sub || sub.state==='NEW' || sub.state==='CREATED') return 'niet_ingediend';
+      if (sub.state==='TURNED_IN') return 'ingediend';
+      if (sub.state==='RETURNED') return sub.assignedGrade!=null ? 'afgerond' : 'remediering';
       return 'niet_ingediend';
     };
 
-    // Filter: enkel lopende taken
-    const lopend = mijnTaken.filter(taak =>
-      students.some(s => vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond')
-    );
+    // Enkel lopende taken
+    const lopend = mijnTaken.filter(taak => students.some(s => vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond'));
 
-    sync.style.display='none';
-    status.textContent=`${lopend.length} lopend · ${mijnTaken.length-lopend.length} afgerond verborgen${!gefiltered?' · (alle taken, filter niet actief)':''}`;
+    sync.style.display = 'none';
+    status.textContent = `${lopend.length} lopend · ${mijnTaken.length - lopend.length} afgerond verborgen`;
 
-    if(!lopend.length){
-      cont.innerHTML='<div style="text-align:center;padding:2rem;color:#3b6d11;background:#eaf3de;border-radius:10px;border:1px solid #639922">🎉 Alle taken zijn afgerond!</div>';
+    if (!lopend.length) {
+      cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#3b6d11;background:#eaf3de;border-radius:10px;border:1px solid #639922">🎉 Alle taken zijn afgerond!</div>';
       return;
     }
 
-    const kol = (emo,t,namen,kl) => `<div><div class="taak-col-title">${emo} ${t} (${namen.length})</div>${namen.length?namen.map(n=>`<span class="lln-tag ${kl}">${n}</span>`).join(''):'<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
+    const kol = (emo,t,namen,kl) => `<div><div class="col-title">${emo} ${t} (${namen.length})</div>${namen.length ? namen.map(n=>`<span class="lln-tag ${kl}">${n}</span>`).join('') : '<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
 
     cont.innerHTML = lopend.map(taak => {
-      const dl = taak.dueDate?`${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}`:null;
-      const gr = {niet_ingediend:[],ingediend:[],remediering:[],afgerond:[]};
+      const dl = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
+      const topicNaam = taak.topicId ? topicsMap[taak.topicId] : null;
+      const gr = { niet_ingediend:[], ingediend:[], remediering:[], afgerond:[] };
       students.forEach(s => {
         const naam = uidNaam[s.userId]||'?';
         (gr[vertaal(subMap[taak.id]?.[s.userId])]||gr.niet_ingediend).push(naam);
@@ -548,7 +585,11 @@ async function laadTaken() {
       return `<div class="taak-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
           <div><div style="font-weight:600;font-size:.95rem">${taak.title}</div>
-            <div style="font-size:.8rem;color:#888">${dl?'📅 '+dl+' · ':''}<a href="${url}" target="_blank" style="color:#378add;font-size:.78rem">↗ Open in Classroom</a></div></div>
+            <div style="font-size:.8rem;color:#888">
+              ${dl?'📅 '+dl+' · ':''}
+              ${topicNaam?'📁 '+topicNaam+' · ':''}
+              <a href="${url}" target="_blank" style="color:#378add;font-size:.78rem">↗ Open in Classroom</a>
+            </div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
             <span class="badge ${pct===100?'green':'blue'}">${klaar}/${tot} klaar</span>
             ${gr.remediering.length?`<span class="badge purple">🔄 ${gr.remediering.length}</span>`:''}
@@ -561,393 +602,322 @@ async function laadTaken() {
           ${kol('🔄','Remediering',gr.remediering,'paars')}
           ${kol('🏁','Afgerond',gr.afgerond,'groen')}
         </div>
-        <div style="margin-top:.6rem;font-size:.78rem;color:#bbb">📡 Live uit Google Classroom</div>
+        <div style="margin-top:.6rem;font-size:.78rem;color:#bbb">📡 Live uit Classroom</div>
       </div>`;
     }).join('');
 
   } catch(e) {
-    sync.style.display='none';
-    cont.innerHTML=`<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}<br><button class="btn sm outline" style="margin-top:.75rem" onclick="laadTaken()">Opnieuw proberen</button></div>`;
+    sync.style.display = 'none';
+    cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}<br><button class="btn sm outline" style="margin-top:.75rem" onclick="laadTaken()">Opnieuw</button></div>`;
   }
 }
 
-// manuele taak functies verwijderd
-
-// OVERZICHT
-function laadOverzicht(){
-  const gid=document.getElementById('overzicht-groep').value;
-  const modus=document.getElementById('overzicht-modus').value;
-  const groep=db.groepen.find(g=>g.id==gid);
-  const cont=document.getElementById('overzicht-container');
-  if(!groep){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een groep</div>';return;}
-  if(modus==='aanwezigheid'){
-    const lessen=getLessen(gid).slice(0,15).reverse();
-    if(lessen.length===0){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb;">Nog geen aanwezigheden.</div>';return;}
-    const rows=groep.leerlingen.map(naam=>{
-      const cellen=lessen.map(l=>{
-        const s=db.aanwezigheden[l.key]?.[naam]?.status||'';
-        return`<td style="text-align:center">${s==='aanwezig'?'<span class="badge green">A</span>':s==='afwezig'?'<span class="badge red">AF</span>':s==='telaat'?'<span class="badge amber">TL</span>':'<span style="color:#ddd">—</span>'}</td>`;
-      }).join('');
-      const totA=lessen.filter(l=>{const s=db.aanwezigheden[l.key]?.[naam]?.status||'';return s==='aanwezig'||s==='telaat';}).length;
-      const pct=Math.round(totA/lessen.length*100);
-      return`<tr><td style="font-weight:500;white-space:nowrap">${naam}</td>${cellen}<td style="text-align:center"><span class="badge ${pct>=80?'green':pct>=60?'amber':'red'}">${pct}%</span></td></tr>`;
+// ── OVERZICHT ─────────────────────────────────────────────────────────────────
+function laadOverzicht() {
+  const gid = document.getElementById('overzicht-groep').value;
+  const groep = db.groepen.find(g => g.id == gid);
+  const cont = document.getElementById('overzicht-container');
+  if (!groep) { cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een groep</div>'; return; }
+  const lessen = Object.keys(db.aanwezigheden).filter(k => k.startsWith(gid+'|')).map(key => {
+    const d=key.split('|'); return {key,datum:d[1],naam:d[2]};
+  }).sort((a,b) => b.datum.localeCompare(a.datum)).slice(0,15).reverse();
+  if (!lessen.length) { cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Nog geen aanwezigheden.</div>'; return; }
+  const rows = groep.leerlingen.map(naam => {
+    const cellen = lessen.map(l => {
+      const s = db.aanwezigheden[l.key]?.[naam]?.status||'';
+      return `<td style="text-align:center">${s==='aanwezig'?'<span class="badge green">A</span>':s==='afwezig'?'<span class="badge red">AF</span>':s==='telaat'?'<span class="badge amber">TL</span>':'<span style="color:#ddd">—</span>'}</td>`;
     }).join('');
-    cont.innerHTML=`<div class="card" style="overflow-x:auto;"><table style="min-width:500px;"><thead><tr><th>Leerling</th>${lessen.map(l=>`<th style="font-size:0.75rem;white-space:nowrap">${l.datum}<br><span style="font-weight:400;color:#bbb;">${l.naam.substring(0,12)}</span></th>`).join('')}<th>%</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  } else {
-    const taken=db.taken.filter(t=>t.gid==gid);
-    if(taken.length===0){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb;">Nog geen taken.</div>';return;}
-    const emo=s=>({niet_ingediend:'❌',ingediend:'📥',nagekeken:'✅',remediering:'🔄',remediering_ingediend:'📬',afgerond:'🏁'}[s]||'—');
-    const rows=groep.leerlingen.map(naam=>{
-      const c=taken.map(t=>{
-        if(!(t.toegewezen||[]).includes(naam))return`<td style="text-align:center;color:#ddd">—</td>`;
-        return`<td style="text-align:center">${emo((t.statussen||{})[naam]||'niet_ingediend')}</td>`;
-      }).join('');
-      return`<tr><td style="font-weight:500">${naam}</td>${c}</tr>`;
-    }).join('');
-    cont.innerHTML=`<div class="card" style="overflow-x:auto;"><div style="font-size:0.8rem;color:#888;margin-bottom:0.5rem;">❌ Niet ingediend &nbsp; 📥 Ingediend &nbsp; ✅ Nagekeken &nbsp; 🔄 Remediering &nbsp; 📬 Rem. ingediend &nbsp; 🏁 Afgerond</div><table style="min-width:400px;"><thead><tr><th>Leerling</th>${taken.map(t=>`<th style="font-size:0.78rem;white-space:nowrap" title="${t.naam}">${t.naam.substring(0,14)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
-  }
+    const totA = lessen.filter(l => { const s=db.aanwezigheden[l.key]?.[naam]?.status||''; return s==='aanwezig'||s==='telaat'; }).length;
+    const pct = Math.round(totA/lessen.length*100);
+    return `<tr><td style="font-weight:500;white-space:nowrap">${naam}</td>${cellen}<td style="text-align:center"><span class="badge ${pct>=80?'green':pct>=60?'amber':'red'}">${pct}%</span></td></tr>`;
+  }).join('');
+  cont.innerHTML = `<div class="card" style="overflow-x:auto"><table style="min-width:500px"><thead><tr><th>Leerling</th>${lessen.map(l=>`<th style="font-size:.75rem;white-space:nowrap">${l.datum}<br><span style="font-weight:400;color:#bbb">${l.naam.substring(0,12)}</span></th>`).join('')}<th>%</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-// DEADLINE CHECKER
-
-function slaaTaakOp() {
-  const naam=document.getElementById('na-taak-naam').value.trim();
-  if(!naam){sluit('modal-na-opslaan');return;}
-  const deadline=document.getElementById('na-taak-deadline').value;
-  const ctx=window._lesCtx; if(!ctx)return;
-  const groep=db.groepen.find(g=>g.id==ctx.gid);
-  let toegewezen=[];
-  if(groep?.type==='boekhouden'){toegewezen=groep?.leerlingen||[];}
-  else{const aanw=db.aanwezigheden[ctx.key]||{};toegewezen=(groep?.leerlingen||[]).filter(n=>['aanwezig','telaat'].includes(aanw[n]?.status));}
-  db.taken.push({id:Date.now(),naam,deadline,gid:ctx.gid,les:ctx.key,type:groep?.type||'andere',toegewezen,statussen:{}});
-  save(); sluit('modal-na-opslaan');
-}
-function checkDeadlines(){
+// ── DEADLINES ─────────────────────────────────────────────────────────────────
+function checkDeadlines() {
   const vd=new Date(); vd.setHours(0,0,0,0); let n=0;
-  db.taken.forEach(t=>{
-    if(!t.deadline)return;
-    const groep=db.groepen.find(g=>g.id==t.gid);
-    if(!groep||groep.type==='andere')return;
+  db.taken.forEach(t => {
+    if (!t.deadline) return;
+    const groep = db.groepen.find(g => g.id==t.gid);
+    if (!groep || groep.type==='andere') return;
     const dl=new Date(t.deadline); dl.setHours(0,0,0,0); if(dl>=vd)return;
-    (t.toegewezen||[]).forEach(naam=>{ if(!((t.statussen||{})[naam])||((t.statussen||{})[naam])==='niet_ingediend')n++; });
+    (t.toegewezen||[]).forEach(naam => { if (!t.statussen[naam]||t.statussen[naam]==='niet_ingediend') n++; });
   });
   const badge=document.getElementById('deadline-badge');
   badge.textContent=n; badge.style.display=n>0?'flex':'none';
 }
-function openDeadlineModal(){
-  const vd=new Date(); vd.setHours(0,0,0,0);
-  let html=''; let gevonden=false;
-  db.taken.forEach(taak=>{
-    if(!taak.deadline)return;
+function openDeadlineModal() {
+  const vd=new Date(); vd.setHours(0,0,0,0); let html=''; let ok=false;
+  db.taken.forEach(taak => {
+    if (!taak.deadline) return;
     const groep=db.groepen.find(g=>g.id==taak.gid);
-    if(!groep||groep.type==='andere')return;
+    if (!groep||groep.type==='andere') return;
     const dl=new Date(taak.deadline); dl.setHours(0,0,0,0); if(dl>=vd)return;
-    const te_laat=(taak.toegewezen||[]).filter(n=>{ const s=(taak.statussen||{})[n]; return!s||s==='niet_ingediend'; });
-    if(!te_laat.length)return;
-    gevonden=true;
-    html+=`<div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #f0f2f5;">
-      <div style="font-weight:600;font-size:0.9rem;">${taak.naam}</div>
-      <div style="font-size:0.8rem;color:#888;margin-bottom:0.5rem;">📅 ${taak.deadline} · ${groep.naam}</div>
-      ${te_laat.map(naam=>{
+    const te_laat=(taak.toegewezen||[]).filter(n=>!taak.statussen[n]||taak.statussen[n]==='niet_ingediend');
+    if (!te_laat.length) return;
+    ok=true;
+    html+=`<div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #f0f2f5">
+      <div style="font-weight:600">${taak.naam}</div>
+      <div style="font-size:.8rem;color:#888;margin-bottom:.5rem">📅 ${taak.deadline} · ${groep.naam}</div>
+      ${te_laat.map(naam => {
         const idx=groep.leerlingen.indexOf(naam);
         const coach=groep.coaches?.[idx]||'';
         const cbid=`cb_${taak.id}_${naam.replace(/\W/g,'_')}`;
-        return`<div class="deadline-row">
+        return `<div class="dl-row">
           <input type="checkbox" id="${cbid}" checked data-taak="${taak.id}" data-naam="${naam}" data-gid="${groep.id}">
-          <label for="${cbid}" style="flex:1;cursor:pointer;font-weight:500;">${naam}</label>
-          ${coach?`<span style="font-size:0.78rem;color:#888;">coach: ${coach}</span>`:'<span style="font-size:0.78rem;color:#e24b4a;">⚠ geen coach</span>'}
-          <button class="btn xs outline" onclick="previewMail(${taak.id},'${naam}',${groep.id})">✉ Tekst opstellen</button>
+          <label for="${cbid}" style="flex:1;cursor:pointer;font-weight:500">${naam}</label>
+          ${coach?`<span style="font-size:.78rem;color:#888">coach: ${coach}</span>`:'<span style="font-size:.78rem;color:#e24b4a">⚠ geen coach</span>'}
+          <button class="btn xs outline" onclick="previewMail(${taak.id},'${naam}',${groep.id})">✉ Tekst</button>
         </div>`;
       }).join('')}
     </div>`;
   });
-  document.getElementById('deadline-inhoud').innerHTML=gevonden?html:'<div style="text-align:center;padding:2rem;color:#aaa;">Geen overschreden deadlines 🎉</div>';
+  document.getElementById('dl-inhoud').innerHTML = ok ? html : '<div style="text-align:center;padding:2rem;color:#aaa">Geen overschreden deadlines 🎉</div>';
   document.getElementById('modal-deadlines').classList.add('open');
 }
 
-function previewMail(tid,naam,gid){
-  const taak=db.taken.find(t=>t.id==tid);
-  const groep=db.groepen.find(g=>g.id==gid);
-  if(!taak||!groep)return;
+let mailCtx=null;
+function previewMail(tid, naam, gid) {
+  const taak=db.taken.find(t=>t.id==tid), groep=db.groepen.find(g=>g.id==gid);
+  if (!taak||!groep) return;
   const idx=groep.leerlingen.indexOf(naam);
   mailCtx={taak,naam,groep,voornaam:naam.split(' ')[0],coach:groep.coaches?.[idx]||''};
-  document.getElementById('mail-preview-naam').textContent=naam;
-  document.getElementById('mail-preview-to').textContent=mailCtx.coach||'⚠ geen coach ingesteld';
-  document.getElementById('mail-nieuwe-deadline').value='';
+  document.getElementById('mail-naam').textContent=naam;
+  document.getElementById('mail-coach').textContent=mailCtx.coach||'⚠ niet ingesteld';
+  document.getElementById('mail-nd').value='';
   const isKern68=groep.type==='kern68';
-  document.getElementById('kern68-opties-blok').style.display=isKern68?'block':'none';
-  if(isKern68){
-    document.getElementById('kern68-opties-lijst').innerHTML=db.mail.optioneleTeksten.map((t,i)=>
-      `<label style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.4rem;font-size:0.85rem;cursor:pointer;">
-        <input type="checkbox" data-idx="${i}" onchange="updateMailPreview()" style="margin-top:2px;"><span>${t.substring(0,100)}${t.length>100?'…':''}</span>
-      </label>`).join('')||'<span style="color:#aaa;font-size:0.85rem;">Geen optionele teksten.</span>';
+  document.getElementById('kern68-opties').style.display=isKern68?'block':'none';
+  if (isKern68) {
+    document.getElementById('kern68-opt-lijst').innerHTML=(db.mail.opties||[]).map((t,i)=>
+      `<label style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.4rem;font-size:.85rem;cursor:pointer">
+        <input type="checkbox" data-idx="${i}" onchange="updateMail()" style="margin-top:2px"><span>${t.substring(0,100)}${t.length>100?'…':''}</span>
+      </label>`).join('')||'<span style="color:#aaa;font-size:.85rem">Geen teksten.</span>';
   }
   document.getElementById('modal-mail').classList.add('open');
-  updateMailPreview();
+  updateMail();
 }
-function updateMailPreview(){
-  if(!mailCtx)return;
+function updateMail() {
+  if (!mailCtx) return;
   const {taak,voornaam,groep}=mailCtx;
-  const nd=document.getElementById('mail-nieuwe-deadline').value||'(nog in te vullen)';
+  const nd=document.getElementById('mail-nd').value||'(nog in te vullen)';
   let tekst='';
-  const m=db.mail;
-  if(groep.type==='boekhouden') tekst=m.templateBoekhouden;
-  else if(groep.type==='kern68'){
-    tekst=m.templateKern68Basis;
-    Array.from(document.querySelectorAll('#kern68-opties-lijst input:checked')).forEach(cb=>{tekst+='\n\n'+m.optioneleTeksten[+cb.dataset.idx];});
-    tekst+=m.templateKern68Slot;
+  if (groep.type==='boekhouden') tekst=db.mail.boekh;
+  else if (groep.type==='kern68') {
+    tekst=db.mail.basis;
+    Array.from(document.querySelectorAll('#kern68-opt-lijst input:checked')).forEach(cb => { tekst+='\n\n'+(db.mail.opties||[])[+cb.dataset.idx]; });
+    tekst+=db.mail.slot;
   }
-  const vervang=t=>t.replace(/{voornaam}/g,voornaam).replace(/{taaknaam}/g,taak.naam).replace(/{deadline}/g,taak.deadline||'?').replace(/{nieuwe_deadline}/g,nd);
-  document.getElementById('mail-preview-tekst').textContent=vervang(tekst);
+  const v=t=>t.replace(/{voornaam}/g,voornaam).replace(/{taaknaam}/g,taak.naam).replace(/{deadline}/g,taak.deadline||'?').replace(/{nieuwe_deadline}/g,nd);
+  document.getElementById('mail-tekst').textContent=v(tekst);
 }
-function kopieerMailTekst(){
-  const tekst=document.getElementById('mail-preview-tekst').textContent;
-  navigator.clipboard.writeText(tekst).then(()=>{
-    const btn=document.getElementById('btn-kopieer-mail');
-    btn.textContent='✅ Gekopieerd!';
-    setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
-  }).catch(()=>{
-    // Fallback voor browsers zonder clipboard API
-    const ta=document.createElement('textarea');
-    ta.value=tekst; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-    const btn=document.getElementById('btn-kopieer-mail');
-    btn.textContent='✅ Gekopieerd!';
-    setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
-  });
+function kopieer() {
+  const tekst=document.getElementById('mail-tekst').textContent;
+  navigator.clipboard?.writeText(tekst).catch(()=>{const ta=document.createElement('textarea');ta.value=tekst;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
+  const btn=document.getElementById('btn-kopi'); btn.textContent='✅ Gekopieerd!'; setTimeout(()=>btn.textContent='📋 Kopiëren',2000);
 }
-function stuurGeselecteerdeMails(){
-  const checked=Array.from(document.querySelectorAll('#deadline-inhoud input[type=checkbox]:checked'));
-  if(!checked.length){alert('Selecteer minstens één leerling.');return;}
-  sluit('modal-deadlines');
-  let i=0;
-  function volgende(){
-    if(i>=checked.length)return;
+function stuurMails() {
+  const checked=Array.from(document.querySelectorAll('#dl-inhoud input:checked'));
+  if (!checked.length) { alert('Selecteer minstens één leerling.'); return; }
+  sluit('modal-deadlines'); let i=0;
+  function vol() {
+    if (i>=checked.length) return;
     const cb=checked[i++];
     previewMail(+cb.dataset.taak,cb.dataset.naam,+cb.dataset.gid);
     const footer=document.querySelector('#modal-mail .modal-footer');
-    document.getElementById('btn-volgende')?.remove();
-    if(i<checked.length){
-      const btn=document.createElement('button');
-      btn.id='btn-volgende'; btn.className='btn sm outline';
-      btn.textContent=`Volgende (${i}/${checked.length})`;
-      btn.onclick=()=>{sluit('modal-mail');setTimeout(volgende,150);};
+    document.getElementById('btn-vol')?.remove();
+    if (i<checked.length) {
+      const btn=document.createElement('button'); btn.id='btn-vol'; btn.className='btn sm outline';
+      btn.textContent=`Volgende (${i}/${checked.length})`; btn.onclick=()=>{sluit('modal-mail');setTimeout(vol,150);};
       footer.insertBefore(btn,footer.firstChild);
     }
   }
-  setTimeout(volgende,200);
+  setTimeout(vol,200);
 }
 
-// GROEPEN
-function openGroepModal(id){
-  document.getElementById('groep-modal-titel').textContent=id?'Groep bewerken':'Groep toevoegen';
-  document.getElementById('groep-edit-id').value=id||'';
-  if(id){
+// ── GROEPEN ───────────────────────────────────────────────────────────────────
+function openGroepModal(id) {
+  document.getElementById('groep-titel').textContent=id?'Groep bewerken':'Groep toevoegen';
+  document.getElementById('g-id').value=id||'';
+  if (id) {
     const g=db.groepen.find(g=>g.id==id);
-    document.getElementById('groep-naam').value=g.naam;
-    document.getElementById('groep-type').value=g.type||'andere';
-    document.getElementById('groep-leerlingen').value=g.leerlingen.join('\n');
-    document.getElementById('groep-coaches').value=(g.coaches||[]).join('\n');
+    document.getElementById('g-naam').value=g.naam;
+    document.getElementById('g-type').value=g.type||'andere';
+    document.getElementById('g-leerlingen').value=g.leerlingen.join('\n');
+    document.getElementById('g-coaches').value=(g.coaches||[]).join('\n');
   } else {
-    ['groep-naam','groep-leerlingen','groep-coaches'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('groep-type').value='andere';
+    ['g-naam','g-leerlingen','g-coaches'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('g-type').value='andere';
   }
   document.getElementById('modal-groep').classList.add('open');
 }
-function slaGroepOp(){
-  const naam=document.getElementById('groep-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
-  const type=document.getElementById('groep-type').value;
-  const leerlingen=document.getElementById('groep-leerlingen').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  const emails=[];
-  const coaches=document.getElementById('groep-coaches').value.split('\n').map(l=>l.trim());
-  const eid=document.getElementById('groep-edit-id').value;
-  if(eid)Object.assign(db.groepen.find(g=>g.id==eid),{naam,type,leerlingen,emails,coaches});
-  else db.groepen.push({id:Date.now(),naam,type,leerlingen,emails,coaches});
-  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-groep');
+function slaGroepOp() {
+  const naam=document.getElementById('g-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
+  const type=document.getElementById('g-type').value;
+  const leerlingen=document.getElementById('g-leerlingen').value.split('\n').map(l=>l.trim()).filter(Boolean);
+  const coaches=document.getElementById('g-coaches').value.split('\n').map(l=>l.trim());
+  const eid=document.getElementById('g-id').value;
+  if (eid) Object.assign(db.groepen.find(g=>g.id==eid),{naam,type,leerlingen,coaches});
+  else db.groepen.push({id:Date.now(),naam,type,leerlingen,coaches});
+  save(); vulDD('aanw-groep'); vulDD('overzicht-groep'); laadInstellingen(); sluit('modal-groep');
 }
-function verwijderGroep(id){
-  if(!confirm('Groep verwijderen? Alle data gaat verloren.'))return;
+function verwijderGroep(id) {
+  if (!confirm('Groep verwijderen?')) return;
   db.groepen=db.groepen.filter(g=>g.id!=id);
   db.aanwezigheden=Object.fromEntries(Object.entries(db.aanwezigheden).filter(([k])=>!k.startsWith(id+'|')));
   db.taken=db.taken.filter(t=>t.gid!=id);
-  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen();
+  save(); vulDD('aanw-groep'); vulDD('overzicht-groep'); laadInstellingen();
 }
 
-// INSTELLINGEN
-function laadInstellingen(){
-  const cont=document.getElementById('groepen-lijst');
-  const typeLabel={boekhouden:'📘 Boekhouden',kern68:'📗 Kern 6+8',andere:'📙 Andere'};
-  cont.innerHTML=db.groepen.length===0?'<p style="font-size:0.88rem;color:#bbb;">Nog geen groepen.</p>':
-    db.groepen.map(g=>`<div class="groep-item"><strong style="flex:1">${g.naam}</strong><span class="badge gray">${typeLabel[g.type]||g.type}</span><span style="font-size:0.8rem;color:#aaa">${g.leerlingen.length} lln</span><button class="btn outline xs" onclick="openGroepModal(${g.id})">✏</button><button class="btn danger xs" onclick="verwijderGroep(${g.id})">🗑</button></div>`).join('');
-  const m=db.mail;
-  document.getElementById('mail-template-boekh').value=m.templateBoekhouden;
-  document.getElementById('mail-template-kern68-basis').value=m.templateKern68Basis;
-  document.getElementById('mail-template-kern68-slot').value=m.templateKern68Slot;
-  renderOptTeksten();
+// ── SAMENVOEGEN ───────────────────────────────────────────────────────────────
+function openSamenvoegenModal() {
+  document.getElementById('samen-naam').value='';
+  document.getElementById('samen-lijst').innerHTML=db.groepen.map(g=>`<label style="display:flex;align-items:center;gap:.5rem;padding:.35rem;cursor:pointer;font-size:.88rem"><input type="checkbox" value="${g.id}"><span style="flex:1">${g.naam}</span><span style="font-size:.78rem;color:#aaa">${g.leerlingen.length} lln</span></label>`).join('');
+  document.getElementById('modal-samen').classList.add('open');
 }
-function renderOptTeksten(){
-  const cont=document.getElementById('opt-teksten-lijst');
-  cont.innerHTML=db.mail.optioneleTeksten.map((t,i)=>`<div class="opt-tekst">
-    <span style="font-size:0.8rem;color:#888;padding-top:2px;min-width:18px;">${i+1}.</span>
-    <textarea rows="2" onchange="db.mail.optioneleTeksten[${i}]=this.value">${t}</textarea>
-    <button class="btn danger xs" onclick="verwijderOptTekst(${i})">🗑</button>
-  </div>`).join('')||'<p style="font-size:0.85rem;color:#bbb;margin-bottom:0.5rem;">Nog geen teksten.</p>';
+function voerSamenvoegen() {
+  const naam=document.getElementById('samen-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
+  const type=document.getElementById('samen-type').value;
+  const gekozen=Array.from(document.querySelectorAll('#samen-lijst input:checked')).map(cb=>cb.value);
+  if (gekozen.length<2) { alert('Selecteer minstens 2 klassen.'); return; }
+  const map=new Map();
+  gekozen.forEach(gid=>{const g=db.groepen.find(g=>g.id==gid);if(!g)return;g.leerlingen.forEach((n,i)=>{if(!map.has(n))map.set(n,{coach:g.coaches?.[i]||''});});});
+  const leerlingen=[...map.keys()].sort();
+  db.groepen.push({id:Date.now(),naam,type,leerlingen,coaches:leerlingen.map(n=>map.get(n).coach)});
+  save(); vulDD('aanw-groep'); vulDD('overzicht-groep'); laadInstellingen(); sluit('modal-samen');
+  alert(`✅ "${naam}" aangemaakt met ${leerlingen.length} leerlingen.`);
 }
-function verwijderOptTekst(i){db.mail.optioneleTeksten.splice(i,1);save();renderOptTeksten();}
-function voegOptTekstToe(){db.mail.optioneleTeksten.push('Nieuwe tekst…');save();renderOptTeksten();}
+
+// ── SUBGROEP ──────────────────────────────────────────────────────────────────
+function openSubgroepModal() {
+  document.getElementById('sub-naam').value='';
+  document.getElementById('sub-bron').innerHTML=db.groepen.map(g=>`<label style="display:flex;align-items:center;gap:.5rem;padding:.35rem;cursor:pointer;font-size:.88rem"><input type="checkbox" value="${g.id}" onchange="renderSubLln()"><span style="flex:1">${g.naam}</span></label>`).join('');
+  document.getElementById('sub-lln').innerHTML='<p style="color:#bbb;font-size:.85rem;padding:.5rem">Selecteer bronklassen.</p>';
+  document.getElementById('modal-sub').classList.add('open');
+}
+function renderSubLln() {
+  const gekozen=Array.from(document.querySelectorAll('#sub-bron input:checked')).map(cb=>cb.value);
+  const map=new Map();
+  gekozen.forEach(gid=>{const g=db.groepen.find(g=>g.id==gid);if(!g)return;g.leerlingen.forEach((n,i)=>{if(!map.has(n))map.set(n,{coach:g.coaches?.[i]||'',klas:g.naam});});});
+  const namen=[...map.keys()].sort();
+  const cont=document.getElementById('sub-lln');
+  if (!namen.length) { cont.innerHTML='<p style="color:#bbb;font-size:.85rem;padding:.5rem">Geen leerlingen.</p>'; return; }
+  cont.innerHTML=`<label style="display:flex;align-items:center;gap:.5rem;padding:.35rem;cursor:pointer;font-size:.82rem;color:#888"><input type="checkbox" onchange="document.querySelectorAll('.sub-cb').forEach(c=>c.checked=this.checked)"> Alles selecteren</label>`+
+    namen.map(n=>`<label style="display:flex;align-items:center;gap:.5rem;padding:.35rem;cursor:pointer;font-size:.88rem;border-top:1px solid #f5f5f5"><input type="checkbox" class="sub-cb" value="${n}" data-coach="${map.get(n).coach}"><span style="flex:1">${n}</span><span style="font-size:.78rem;color:#aaa">${map.get(n).klas}</span></label>`).join('');
+}
+function voerSubgroep() {
+  const naam=document.getElementById('sub-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
+  const type=document.getElementById('sub-type').value;
+  const gekozen=Array.from(document.querySelectorAll('.sub-cb:checked'));
+  if (!gekozen.length) { alert('Vink minstens één leerling aan.'); return; }
+  db.groepen.push({id:Date.now(),naam,type,leerlingen:gekozen.map(cb=>cb.value),coaches:gekozen.map(cb=>cb.dataset.coach||'')});
+  save(); vulDD('aanw-groep'); vulDD('overzicht-groep'); laadInstellingen(); sluit('modal-sub');
+  alert(`✅ "${naam}" aangemaakt.`);
+}
+
+// ── INSTELLINGEN ──────────────────────────────────────────────────────────────
+function laadInstellingen() {
+  const tl={boekhouden:'📘 Boekhouden',kern68:'📗 Kern 6+8',andere:'📙 Andere'};
+  document.getElementById('groepen-lijst').innerHTML=db.groepen.length
+    ? db.groepen.map(g=>`<div class="groep-item"><strong style="flex:1">${g.naam}</strong><span class="badge gray">${tl[g.type]||g.type}</span><span style="font-size:.8rem;color:#aaa">${g.leerlingen.length} lln</span><button class="btn outline xs" onclick="openGroepModal(${g.id})">✏</button><button class="btn danger xs" onclick="verwijderGroep(${g.id})">🗑</button></div>`).join('')
+    : '<p style="font-size:.88rem;color:#bbb">Nog geen groepen.</p>';
+  document.getElementById('mail-boekh').value=db.mail.boekh||'';
+  document.getElementById('mail-basis').value=db.mail.basis||'';
+  document.getElementById('mail-slot').value=db.mail.slot||'';
+  renderOpt();
+}
+function renderOpt() {
+  document.getElementById('opt-lijst').innerHTML=(db.mail.opties||[]).map((t,i)=>`<div class="opt-tekst"><span style="font-size:.8rem;color:#888;padding-top:2px;min-width:18px">${i+1}.</span><textarea rows="2" onchange="db.mail.opties[${i}]=this.value">${t}</textarea><button class="btn danger xs" onclick="verwijderOpt(${i})">🗑</button></div>`).join('');
+}
+function verwijderOpt(i){db.mail.opties.splice(i,1);save();renderOpt();}
+function voegOptToe(){if(!db.mail.opties)db.mail.opties=[];db.mail.opties.push('Nieuwe tekst…');save();renderOpt();}
 function slaMailOp(){
-  db.mail.templateBoekhouden=document.getElementById('mail-template-boekh').value;
-  db.mail.templateKern68Basis=document.getElementById('mail-template-kern68-basis').value;
-  db.mail.templateKern68Slot=document.getElementById('mail-template-kern68-slot').value;
-  save(); alert('✓ Mail-instellingen opgeslagen!');
+  db.mail.boekh=document.getElementById('mail-boekh').value;
+  db.mail.basis=document.getElementById('mail-basis').value;
+  db.mail.slot=document.getElementById('mail-slot').value;
+  save();alert('✓ Opgeslagen!');
+}
+function exporteer(){const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='portaal-'+new Date().toISOString().split('T')[0]+'.json';a.click();}
+function resetAlles(){if(!confirm('Alles wissen?'))return;[KEY,'lkr_portaal_v3','lkr_portaal_v2'].forEach(k=>localStorage.removeItem(k));location.reload();}
+
+// ── GOOGLE AUTH ───────────────────────────────────────────────────────────────
+const GKEY = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
+const GSCOPE = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
+let googleToken = null;
+
+function laadGScript(cb) {
+  if (window.google?.accounts) { cb(); return; }
+  const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.onload=cb; document.head.appendChild(s);
 }
 
-// GOOGLE AUTH
-const GKEY='732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
-const GSCOPE='https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
-let googleToken=null;
-
-function laadGScript(cb){
-  if(window.google?.accounts){cb();return;}
-  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);
-}
-
-function koppelEnHerlaad(){
-  // Wis _mijnUserId zodat die opnieuw opgehaald wordt
-  window._mijnUserId = null;
-  koppelGoogle(true);
-}
-
-function koppelGoogle(herlaadTaken){
-  laadGScript(()=>{
-    google.accounts.oauth2.initTokenClient({client_id:GKEY,scope:GSCOPE,callback:(r)=>{
-      if(r.error){alert('Aanmelden mislukt: '+r.error);return;}
-      googleToken=r.access_token;
+function koppelGoogle() {
+  laadGScript(() => {
+    google.accounts.oauth2.initTokenClient({ client_id:GKEY, scope:GSCOPE, callback:(r) => {
+      if (r.error) { alert('Aanmelden mislukt: '+r.error); return; }
+      googleToken = r.access_token;
+      localStorage.setItem('lkr_google','1');
       fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+googleToken}})
-        .then(x=>x.json()).then(info=>{
-          localStorage.setItem('lkr_google','1');
-          localStorage.setItem('lkr_google_naam',info.name||'');
+        .then(x=>x.json()).then(info => {
+          localStorage.setItem('lkr_google_naam', info.name||'');
           zetVerbUI(true);
-          // Verberg sync bar als die getoond werd voor "verbinding herstellen"
-          const sync = document.getElementById('taken-sync');
-          if(sync) sync.style.display='none';
-          // Herlaad taken als tab actief is OF als expliciet gevraagd
-          if(herlaadTaken || document.getElementById('tab-taken').classList.contains('active')){
-            window._mijnUserId = null;
-            laadTaken();
-          }
+          window._mijnUserId = null; // reset zodat userinfo opnieuw opgehaald wordt
+          // Herlaad taken als tab actief is
+          if (document.getElementById('tab-taken').classList.contains('active')) laadTaken();
+          // Callback als iemand wachtte op token
+          if (window._naToken) { window._naToken(); window._naToken=null; }
         });
     }}).requestAccessToken();
   });
 }
 
-function zetVerbUI(v){
-  document.getElementById('google-status-blok').style.display=v?'none':'block';
-  document.getElementById('google-verbonden-blok').style.display=v?'block':'none';
-  if(v)document.getElementById('google-gebruiker').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
+function zetVerbUI(v) {
+  document.getElementById('google-uit').style.display=v?'none':'block';
+  document.getElementById('google-aan').style.display=v?'block':'none';
+  if (v) document.getElementById('google-naam').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
 }
-
 function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
 
-async function gFetch(url){
+async function gFetch(url) {
   const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
-  if(!r.ok)throw new Error(r.status+' '+r.statusText);
+  if (!r.ok) throw new Error(r.status+' '+r.statusText);
   return r.json();
 }
 
-function initGoogle(){
-  if(localStorage.getItem('lkr_google')==='1')zetVerbUI(true);
-}
-
+// ── IMPORT ────────────────────────────────────────────────────────────────────
 async function importeerClassroom() {
-  if (!googleToken) { alert('Meld eerst aan met Google.'); koppelGoogle(); return; }
-  const btn = document.querySelector('#google-verbonden-blok .btn.outline');
-  btn.textContent = '⏳ Laden…'; btn.disabled = true;
-
+  if (!googleToken) { koppelGoogle(); return; }
+  const btn=document.querySelector('#google-aan .btn.outline'); btn.textContent='⏳ Laden…'; btn.disabled=true;
   try {
-    // Haal alle klassen op
-    const resp = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30', {
-      headers: { Authorization: 'Bearer ' + googleToken }
-    });
-    const data = await resp.json();
-    if (!data.courses || data.courses.length === 0) {
-      alert('Geen actieve klassen gevonden in Google Classroom.'); return;
+    const data=await gFetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30');
+    if (!data.courses?.length) { alert('Geen actieve klassen gevonden.'); return; }
+    const klassen=[];
+    for (const c of data.courses) {
+      const r=await gFetch(`https://classroom.googleapis.com/v1/courses/${c.id}/students?pageSize=100`);
+      klassen.push({courseId:c.id,naam:c.name,leerlingen:(r.students||[]).map(s=>({naam:s.profile.name.fullName}))});
     }
-
-    // Haal leerlingen op voor elke klas
-    const klassen = [];
-    for (const course of data.courses) {
-      const rResp = await fetch(`https://classroom.googleapis.com/v1/courses/${course.id}/students?pageSize=100`, {
-        headers: { Authorization: 'Bearer ' + googleToken }
-      });
-      const rData = await rResp.json();
-      klassen.push({
-        courseId: course.id,
-        naam: course.name,
-        leerlingen: (rData.students || []).map(s => ({
-          naam: s.profile.name.fullName
-        }))
-      });
-    }
-
-    // Toon importeer-modal
+    // Sla alle classroom klassen op voor de taken-dropdown
+    db.classroomKlassen = klassen.map(k=>({id:k.courseId,naam:k.naam}));
+    save();
     toonImportModal(klassen);
-  } catch(e) {
-    alert('Fout bij ophalen: ' + e.message);
-  } finally {
-    btn.textContent = '🔄 Importeren'; btn.disabled = false;
-  }
+  } catch(e) { alert('Fout: '+e.message); }
+  finally { btn.textContent='🔄 Groepen & klassen importeren'; btn.disabled=false; }
 }
 
-function selecteerEnkelBestaande() {
-  document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(cb => {
-    const idx = +cb.dataset.idx;
-    const modal = document.getElementById('modal-import');
-    const klas = modal._klassen[idx];
-    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
-    cb.checked = !!bestaand;
-  });
-}
-
+let _importKlassen=[];
 function toonImportModal(klassen) {
-  // Maak modal dynamisch aan als die nog niet bestaat
-  let modal = document.getElementById('modal-import');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.className = 'modal-backdrop';
-    modal.id = 'modal-import';
-    modal.innerHTML = `<div class="modal wide">
-      <h3>📥 Importeren uit Google Classroom</h3>
-      <p style="font-size:0.85rem;color:#666;margin-bottom:0.5rem;">Kies welke klassen je wil importeren. Bestaande groepen worden bijgewerkt.</p>
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
-        <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=true)">Alles selecteren</button>
-        <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=false)">Alles deselecteren</button>
-        <button class="btn xs outline" onclick="selecteerEnkelBestaande()">↻ Enkel bestaande bijwerken</button>
+  _importKlassen=klassen;
+  document.getElementById('imp-lijst').innerHTML=klassen.map((k,i) => {
+    const bestaand=db.groepen.find(g=>g.naam.toLowerCase()===k.naam.toLowerCase());
+    return `<div style="padding:.75rem 0;border-bottom:1px solid #f0f2f5">
+      <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+        <input type="checkbox" id="imp${i}" checked data-idx="${i}">
+        <label for="imp${i}" style="font-weight:600;flex:1;cursor:pointer">${k.naam}</label>
+        <span style="font-size:.8rem;color:#888">${k.leerlingen.length} lln</span>
+        ${bestaand?'<span class="badge amber">bijwerken</span>':'<span class="badge green">nieuw</span>'}
       </div>
-      <div id="import-klassen-lijst"></div>
-      <div class="modal-footer">
-        <button class="btn outline sm" onclick="sluit('modal-import')">Annuleren</button>
-        <button class="btn sm" onclick="voerImportUit()">✅ Importeren</button>
-      </div>
-    </div>`;
-    document.body.appendChild(modal);
-    modal.addEventListener('click', e => { if(e.target===modal) modal.classList.remove('open'); });
-  }
-
-  const typeLabel = {boekhouden:'📘 Boekhouden',kern68:'📗 Kern 6+8',andere:'📙 Andere'};
-  document.getElementById('import-klassen-lijst').innerHTML = klassen.map((klas,i) => {
-    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
-    return `<div style="padding:0.75rem 0;border-bottom:1px solid #f0f2f5;">
-      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-        <input type="checkbox" id="imp_${i}" checked data-idx="${i}">
-        <label for="imp_${i}" style="font-weight:600;flex:1;cursor:pointer;">${klas.naam}</label>
-        <span style="font-size:0.8rem;color:#888;">${klas.leerlingen.length} leerlingen</span>
-        ${bestaand ? '<span class="badge amber">bijwerken</span>' : '<span class="badge green">nieuw</span>'}
-      </div>
-      <div style="margin-top:0.4rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-        <span style="font-size:0.82rem;color:#666;">Type:</span>
-        <select id="imp_type_${i}" style="font-size:0.82rem;">
+      <div style="margin-top:.4rem;display:flex;align-items:center;gap:.5rem">
+        <span style="font-size:.82rem;color:#666">Type:</span>
+        <select id="impt${i}" style="font-size:.82rem">
           <option value="andere" ${bestaand?.type==='andere'?'selected':''}>📙 Andere kernen</option>
           <option value="boekhouden" ${bestaand?.type==='boekhouden'?'selected':''}>📘 Boekhouden</option>
           <option value="kern68" ${bestaand?.type==='kern68'?'selected':''}>📗 Kern 6+8</option>
@@ -955,240 +925,47 @@ function toonImportModal(klassen) {
       </div>
     </div>`;
   }).join('');
-
-  // Sla klassen data op voor gebruik bij importeren
-  modal._klassen = klassen;
-  modal.classList.add('open');
+  document.getElementById('modal-import').classList.add('open');
 }
-
-function voerImportUit() {
-  const modal = document.getElementById('modal-import');
-  const klassen = modal._klassen;
-  const checked = Array.from(document.querySelectorAll('#import-klassen-lijst input[type=checkbox]:checked'));
-  let nieuw = 0, bijgewerkt = 0;
-
+function selecteerBestaande() {
+  document.querySelectorAll('#imp-lijst input[type=checkbox]').forEach(cb => {
+    const k=_importKlassen[+cb.dataset.idx];
+    cb.checked=!!db.groepen.find(g=>g.naam.toLowerCase()===k.naam.toLowerCase());
+  });
+}
+function voerImport() {
+  const checked=Array.from(document.querySelectorAll('#imp-lijst input[type=checkbox]:checked'));
+  let n=0, b=0;
   checked.forEach(cb => {
-    const i = +cb.dataset.idx;
-    const klas = klassen[i];
-    const type = document.getElementById(`imp_type_${i}`).value;
-    const leerlingenNamen = klas.leerlingen.map(l => l.naam);
-    const emails = klas.leerlingen.map(l => l.email);
-    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
-
+    const i=+cb.dataset.idx, k=_importKlassen[i], type=document.getElementById(`impt${i}`).value;
+    const namen=k.leerlingen.map(l=>l.naam);
+    const bestaand=db.groepen.find(g=>g.naam.toLowerCase()===k.naam.toLowerCase());
     if (bestaand) {
-      // Bijwerken — coaches behouden
-      const oudeCoaches = bestaand.coaches || [];
-      bestaand.leerlingen = leerlingenNamen;
-      bestaand.emails = [];
-      bestaand.type = type;
-      // Coach per naam bewaren (niet per positie)
-      const coachMap = {};
-      (bestaand.leerlingen||[]).forEach((n,idx) => { coachMap[n] = oudeCoaches[idx]||''; });
-      bestaand.coaches = leerlingenNamen.map(n => coachMap[n]||'');
-      bijgewerkt++;
+      const cm={}; bestaand.leerlingen.forEach((n,i)=>cm[n]=bestaand.coaches?.[i]||'');
+      bestaand.leerlingen=namen; bestaand.type=type; bestaand.emails=[];
+      bestaand.coaches=namen.map(n=>cm[n]||''); b++;
     } else {
-      db.groepen.push({
-        id: Date.now() + i,
-        naam: klas.naam,
-        type,
-        leerlingen: leerlingenNamen,
-        emails: [],
-        coaches: leerlingenNamen.map(() => '')
-      });
-      nieuw++;
+      db.groepen.push({id:Date.now()+i,naam:k.naam,type,leerlingen:namen,emails:[],coaches:namen.map(()=>'')}); n++;
     }
   });
-
-  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-import');
-  alert(`✅ Klaar!\n${nieuw} nieuwe groep(en) aangemaakt\n${bijgewerkt} groep(en) bijgewerkt\n\nVergeet niet de coaches in te vullen via de ✏ knop bij elke groep.`);
+  save(); vulDD('aanw-groep'); vulDD('overzicht-groep'); vulTakenKlassen(); laadInstellingen(); sluit('modal-import');
+  alert(`✅ ${n} nieuw, ${b} bijgewerkt.\n\nVergeet coaches in te vullen via ✏.`);
 }
 
-// DATA
-function exporteerData(){
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='portaal-backup-'+new Date().toISOString().split('T')[0]+'.json';a.click();
-}
-function resetData(){if(!confirm('Alles wissen?'))return;localStorage.removeItem(STORAGE_KEY);location.reload();}
-
-// MODALS
+// ── UTILS ─────────────────────────────────────────────────────────────────────
 function sluit(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
-// INIT
-document.getElementById('aanw-datum').value=new Date().toISOString().split('T')[0];
-['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id));
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('aanw-datum').value = new Date().toISOString().split('T')[0];
+vulDD('aanw-groep'); vulDD('overzicht-groep');
 vulTakenKlassen();
-checkDeadlines(); setInterval(checkDeadlines,60000);
-initGoogle();
-if(db.groepen.length===0){
-  setTimeout(()=>{if(confirm('Welkom!\n\nWil je nu je eerste groep aanmaken?')){showTab('instellingen',document.querySelector('[data-tab=instellingen]'));setTimeout(openGroepModal,200);}},400);
-}
-
-// SAMENVOEGEN
-function openSamenvoegenModal() {
-  document.getElementById('samen-naam').value = '';
-  document.getElementById('samen-type').value = 'andere';
-  document.getElementById('samen-klassen-lijst').innerHTML = db.groepen.map((g,i) =>
-    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;">
-      <input type="checkbox" value="${g.id}">
-      <span style="flex:1">${g.naam}</span>
-      <span style="font-size:0.78rem;color:#aaa">${g.leerlingen.length} lln</span>
-    </label>`
-  ).join('') || '<p style="color:#bbb;font-size:0.85rem;">Geen groepen beschikbaar.</p>';
-  document.getElementById('modal-samenvoegen').classList.add('open');
-}
-
-function voerSamenvoegenUit() {
-  const naam = document.getElementById('samen-naam').value.trim();
-  if (!naam) { alert('Geef een naam voor de nieuwe groep.'); return; }
-  const type = document.getElementById('samen-type').value;
-  const gekozen = Array.from(document.querySelectorAll('#samen-klassen-lijst input:checked')).map(cb => cb.value);
-  if (gekozen.length < 2) { alert('Selecteer minstens 2 klassen om samen te voegen.'); return; }
-
-  const leerlingenMap = new Map(); // naam -> {email, coach} — dedupliceert automatisch
-  gekozen.forEach(gid => {
-    const g = db.groepen.find(g => g.id == gid);
-    if (!g) return;
-    g.leerlingen.forEach((naam, i) => {
-      if (!leerlingenMap.has(naam)) {
-        leerlingenMap.set(naam, { coach: g.coaches?.[i] || '' });
-      }
-    });
-  });
-
-  const leerlingen = [...leerlingenMap.keys()].sort();
-  db.groepen.push({
-    id: Date.now(), naam, type,
-    leerlingen,
-    emails: [],
-    coaches: leerlingen.map(n => leerlingenMap.get(n).coach)
-  });
-  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-samenvoegen');
-  alert(`✅ Groep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.\n\nDe originele klassen staan er nog bij — je kan ze verwijderen als je ze niet meer nodig hebt.`);
-}
-
-// SUBGROEP
-function openSubgroepModal() {
-  document.getElementById('sub-naam').value = '';
-  document.getElementById('sub-type').value = 'boekhouden';
-  renderSubBronklassen();
-  document.getElementById('sub-leerlingen-lijst').innerHTML = '<p style="color:#bbb;font-size:0.85rem;padding:0.5rem;">Selecteer eerst bronklassen hierboven.</p>';
-  document.getElementById('modal-subgroep').classList.add('open');
-}
-
-function renderSubBronklassen() {
-  document.getElementById('sub-bronklassen').innerHTML = db.groepen.map(g =>
-    `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;">
-      <input type="checkbox" value="${g.id}" onchange="renderSubLeerlingen()">
-      <span style="flex:1">${g.naam}</span>
-      <span style="font-size:0.78rem;color:#aaa">${g.leerlingen.length} lln</span>
-    </label>`
-  ).join('') || '<p style="color:#bbb;font-size:0.85rem;">Geen groepen beschikbaar.</p>';
-}
-
-function renderSubLeerlingen() {
-  const gekozen = Array.from(document.querySelectorAll('#sub-bronklassen input:checked')).map(cb => cb.value);
-  const leerlingenMap = new Map();
-  gekozen.forEach(gid => {
-    const g = db.groepen.find(g => g.id == gid);
-    if (!g) return;
-    g.leerlingen.forEach((naam, i) => {
-      if (!leerlingenMap.has(naam)) {
-        leerlingenMap.set(naam, { coach: g.coaches?.[i] || '', klas: g.naam });
-      }
-    });
-  });
-  const gesorteerd = [...leerlingenMap.keys()].sort();
-  const cont = document.getElementById('sub-leerlingen-lijst');
-  if (gesorteerd.length === 0) {
-    cont.innerHTML = '<p style="color:#bbb;font-size:0.85rem;padding:0.5rem;">Geen leerlingen gevonden.</p>'; return;
-  }
-  cont.innerHTML = `<div style="padding:0.35rem;margin-bottom:0.25rem;">
-    <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.82rem;color:#888;">
-      <input type="checkbox" onchange="allesSubAanvinken(this)"> Alles selecteren
-    </label>
-  </div>` + gesorteerd.map(naam => {
-    const info = leerlingenMap.get(naam);
-    return `<label style="display:flex;align-items:center;gap:0.5rem;padding:0.35rem;cursor:pointer;font-size:0.88rem;border-top:1px solid #f5f5f5;">
-      <input type="checkbox" class="sub-lln-cb" value="${naam}" data-coach="${info.coach}">
-      <span style="flex:1">${naam}</span>
-      <span style="font-size:0.78rem;color:#aaa">${info.klas}</span>
-    </label>`;
-  }).join('');
-}
-
-function allesSubAanvinken(master) {
-  document.querySelectorAll('.sub-lln-cb').forEach(cb => cb.checked = master.checked);
-}
-
-function voerSubgroepUit() {
-  const naam = document.getElementById('sub-naam').value.trim();
-  if (!naam) { alert('Geef een naam voor de subgroep.'); return; }
-  const type = document.getElementById('sub-type').value;
-  const gekozen = Array.from(document.querySelectorAll('.sub-lln-cb:checked'));
-  if (gekozen.length === 0) { alert('Vink minstens één leerling aan.'); return; }
-
-  const leerlingen = gekozen.map(cb => cb.value);
-  const coaches = gekozen.map(cb => cb.dataset.coach || '');
-
-  db.groepen.push({ id: Date.now(), naam, type, leerlingen, emails: [], coaches });
-  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-subgroep');
-  alert(`✅ Subgroep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.`);
+laadInstellingen();
+checkDeadlines(); setInterval(checkDeadlines, 60000);
+if (localStorage.getItem('lkr_google')==='1') zetVerbUI(true);
+if (!db.groepen.length) {
+  setTimeout(()=>{ if(confirm('Welkom!\n\nWil je nu je eerste groep aanmaken?')){ showTab('instellingen',document.querySelector('[data-tab=instellingen]')); setTimeout(openGroepModal,200); }},400);
 }
 </script>
-
-<!-- MODAL: SAMENVOEGEN -->
-<div class="modal-backdrop" id="modal-samenvoegen">
-  <div class="modal wide">
-    <h3>🔀 Klassen samenvoegen tot één groep</h3>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Selecteer de klassen die je wil samenvoegen. De leerlingen worden samengevoegd in één nieuwe portaalgroep.</p>
-    <div class="form-group"><label>Naam van de nieuwe groep</label><input type="text" id="samen-naam" placeholder="bv. Kern 6+8"></div>
-    <div class="form-group">
-      <label>Type</label>
-      <select id="samen-type">
-        <option value="andere">📙 Andere kernen</option>
-        <option value="kern68">📗 Kern 6+8</option>
-        <option value="boekhouden">📘 Boekhouden</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Klassen selecteren</label>
-      <div id="samen-klassen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:280px;overflow-y:auto;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluit('modal-samenvoegen')">Annuleren</button>
-      <button class="btn sm" onclick="voerSamenvoegenUit()">Samenvoegen</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: SUBGROEP -->
-<div class="modal-backdrop" id="modal-subgroep">
-  <div class="modal wide">
-    <h3>✂ Subgroep aanmaken uit bestaande klassen</h3>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Vink aan welke leerlingen uit de geselecteerde klassen in de subgroep horen. Gebruik dit voor Boekhouden 4.</p>
-    <div class="form-group"><label>Naam van de subgroep</label><input type="text" id="sub-naam" placeholder="bv. Boekhouden 4"></div>
-    <div class="form-group">
-      <label>Type</label>
-      <select id="sub-type">
-        <option value="boekhouden">📘 Boekhouden</option>
-        <option value="kern68">📗 Kern 6+8</option>
-        <option value="andere">📙 Andere kernen</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Bronklassen (leerlingen uit deze klassen worden getoond)</label>
-      <div id="sub-bronklassen" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;margin-bottom:0.75rem;"></div>
-    </div>
-    <div class="form-group">
-      <label>Leerlingen aanvinken</label>
-      <div id="sub-leerlingen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:300px;overflow-y:auto;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluit('modal-subgroep')">Annuleren</button>
-      <button class="btn sm" onclick="voerSubgroepUit()">Subgroep aanmaken</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
