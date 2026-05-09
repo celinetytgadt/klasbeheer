@@ -430,8 +430,9 @@ async function laadTaken() {
   const status = document.getElementById('taken-status');
   if(!klasId){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas</div>';return;}
 
+  // Token nog niet beschikbaar — vraag aan en herlaad daarna
   if(!googleToken) {
-    cont.innerHTML='<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    cont.innerHTML='<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelEnHerlaad()">Aanmelden met Google</button></div>';
     sync.style.display='none'; return;
   }
 
@@ -770,7 +771,13 @@ function laadGScript(cb){
   const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);
 }
 
-function koppelGoogle(){
+function koppelEnHerlaad(){
+  // Wis _mijnUserId zodat die opnieuw opgehaald wordt
+  window._mijnUserId = null;
+  koppelGoogle(true);
+}
+
+function koppelGoogle(herlaadTaken){
   laadGScript(()=>{
     google.accounts.oauth2.initTokenClient({client_id:GKEY,scope:GSCOPE,callback:(r)=>{
       if(r.error){alert('Aanmelden mislukt: '+r.error);return;}
@@ -780,8 +787,11 @@ function koppelGoogle(){
           localStorage.setItem('lkr_google','1');
           localStorage.setItem('lkr_google_naam',info.name||'');
           zetVerbUI(true);
-          // Als taken-tab actief is, herlaad
-          if(document.getElementById('tab-taken').classList.contains('active'))laadTaken();
+          // Herlaad taken als tab actief is OF als expliciet gevraagd
+          if(herlaadTaken || document.getElementById('tab-taken').classList.contains('active')){
+            window._mijnUserId = null; // reset zodat userinfo opnieuw opgehaald wordt
+            laadTaken();
+          }
         });
     }}).requestAccessToken();
   });
@@ -854,7 +864,11 @@ function toonImportModal(klassen) {
     modal.id = 'modal-import';
     modal.innerHTML = `<div class="modal wide">
       <h3>📥 Importeren uit Google Classroom</h3>
-      <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Kies welke klassen je wil importeren. Bestaande groepen met dezelfde naam worden bijgewerkt.</p>
+      <p style="font-size:0.85rem;color:#666;margin-bottom:0.5rem;">Kies welke klassen je wil importeren. Bestaande groepen worden bijgewerkt.</p>
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+        <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=true)">Alles selecteren</button>
+        <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=false)">Alles deselecteren</button>
+      </div>
       <div id="import-klassen-lijst"></div>
       <div class="modal-footer">
         <button class="btn outline sm" onclick="sluit('modal-import')">Annuleren</button>
