@@ -416,12 +416,17 @@ function classroomNaarPortaalStatus(sub) {
 
 function vulTakenKlassen() {
   const sel = document.getElementById('taken-klas');
-  // Enkel klassen tonen die ook als portaalgroep geïmporteerd zijn
   const geimporteerd = db.classroomKlassen || [];
   const cur = sel.value;
   if(!geimporteerd.length){sel.innerHTML='<option value="">— eerst importeren via Instellingen —</option>';return;}
   sel.innerHTML='<option value="">— kies een klas —</option>'+geimporteerd.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
   if(cur) sel.value=cur;
+  // Token automatisch ophalen als localStorage verbonden zegt maar token leeg is
+  if(!googleToken && localStorage.getItem('lkr_google')==='1') {
+    document.getElementById('taken-sync').style.display='block';
+    document.getElementById('taken-sync').textContent='⏳ Verbinding herstellen…';
+    koppelGoogle(false); // stil aanmelden, geen taken herladen (dat doet de gebruiker via dropdown)
+  }
 }
 
 async function laadTaken() {
@@ -431,8 +436,15 @@ async function laadTaken() {
   const status = document.getElementById('taken-status');
   if(!klasId){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas</div>';return;}
 
-  // Token nog niet beschikbaar — vraag aan en herlaad daarna
+  // Token niet beschikbaar — probeer automatisch aan te melden
   if(!googleToken) {
+    if(localStorage.getItem('lkr_google')==='1') {
+      // Was eerder verbonden — haal token opnieuw op
+      sync.style.display='block'; sync.textContent='⏳ Verbinding herstellen…';
+      cont.innerHTML='';
+      koppelGoogle(true); // true = herlaad taken na aanmelden
+      return;
+    }
     cont.innerHTML='<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelEnHerlaad()">Aanmelden met Google</button></div>';
     sync.style.display='none'; return;
   }
@@ -809,9 +821,12 @@ function koppelGoogle(herlaadTaken){
           localStorage.setItem('lkr_google','1');
           localStorage.setItem('lkr_google_naam',info.name||'');
           zetVerbUI(true);
+          // Verberg sync bar als die getoond werd voor "verbinding herstellen"
+          const sync = document.getElementById('taken-sync');
+          if(sync) sync.style.display='none';
           // Herlaad taken als tab actief is OF als expliciet gevraagd
           if(herlaadTaken || document.getElementById('tab-taken').classList.contains('active')){
-            window._mijnUserId = null; // reset zodat userinfo opnieuw opgehaald wordt
+            window._mijnUserId = null;
             laadTaken();
           }
         });
