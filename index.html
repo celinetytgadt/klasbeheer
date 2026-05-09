@@ -132,12 +132,20 @@ tr:last-child td { border-bottom: none; }
 
 <!-- TAKEN -->
 <div id="tab-taken" class="section">
-  <div class="row">
-    <label class="lbl">Groep</label>
-    <select id="taken-groep" onchange="laadTaken()"></select>
-    <button class="btn sm outline" onclick="openNieuweTaakModal()">+ Nieuwe taak</button>
+  <div class="card">
+    <div class="row" style="margin-bottom:0;">
+      <label class="lbl">Portaalgroep</label>
+      <select id="taken-groep" onchange="takenGroepWisselde()"></select>
+      <label class="lbl">Classroom-klas</label>
+      <select id="taken-classroom-klas" onchange="laadTaken()" style="min-width:200px;">
+        <option value="">— kies eerst een groep —</option>
+      </select>
+      <button class="btn sm outline" id="taken-refresh-btn" onclick="laadTaken()" style="display:none;">🔄 Vernieuwen</button>
+      <span style="font-size:0.8rem;color:#aaa;margin-left:0.5rem;">📡 Taken komen live uit Classroom</span>
+    </div>
   </div>
-  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een groep</div></div>
+  <div id="taken-sync-bar" style="display:none;" class="info-bar">⏳ Taken ophalen uit Classroom…</div>
+  <div id="taken-container"><div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div></div>
 </div>
 
 <!-- OVERZICHT -->
@@ -341,7 +349,7 @@ function showTab(naam, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + naam).classList.add('active');
   if (btn) btn.classList.add('active');
-  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: () => { vulDD('taken-groep'); laadTaken(); }, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
+  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: () => { vulDD('taken-groep'); takenGroepWisselde(); laadTaken(); }, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
 }
 
 // DROPDOWNS
@@ -424,68 +432,173 @@ function naOpslaanNieuweTaak() {
 }
 
 // TAKEN
-function laadTaken() {
-  const gid=document.getElementById('taken-groep').value;
-  const groep=db.groepen.find(g=>g.id==gid);
-  const cont=document.getElementById('taken-container');
-  if(!groep){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een groep</div>';return;}
-  const taken=db.taken.filter(t=>t.gid==gid);
-  if(taken.length===0){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb;">Nog geen taken.</div>';return;}
+// Vertaal Classroom-status naar portaalstatus
+function classroomNaarPortaalStatus(sub) {
+  // sub = submission object van Classroom API
+  if (!sub) return 'niet_ingediend';
+  const s = sub.state;
+  if (s === 'TURNED_IN') return 'ingediend';
+  if (s === 'RETURNED') {
+    // Teruggegeven met score = afgerond, zonder score = remediering
+    const score = sub.assignedGrade;
+    if (score !== undefined && score !== null) return 'afgerond';
+    return 'remediering';
+  }
+  return 'niet_ingediend'; // NEW, CREATED, RECLAIMED_BY_STUDENT
+}
 
-  cont.innerHTML = taken.map(taak => {
-    const st=taak.statussen||{};
-    const STAPPEN=['niet_ingediend','ingediend','nagekeken','remediering','remediering_ingediend','afgerond'];
-    const groepen={niet_ingediend:[],ingediend:[],nagekeken:[],remediering:[],remediering_ingediend:[],afgerond:[]};
-    (taak.toegewezen||[]).forEach(n=>{ const s=st[n]||'niet_ingediend'; (groepen[s]||(groepen.niet_ingediend)).push(n); });
-    const totaal=(taak.toegewezen||[]).length;
-    const klaar=groepen.afgerond.length;
-    const pct=totaal>0?Math.round(klaar/totaal*100):0;
-    const lesnamen=(taak.lessen||[]).map(k=>{const d=k.split('|');return d[1]+' – '+d[2];}).join(', ');
+function takenGroepWisselde() {
+  const gid = document.getElementById('taken-groep').value;
+  const groep = db.groepen.find(g => g.id == gid);
+  const klasSelect = document.getElementById('taken-classroom-klas');
+  if (!groep || !db.classroomKlassen || db.classroomKlassen.length === 0) {
+    klasSelect.innerHTML = '<option value="">— niet verbonden met Classroom —</option>';
+    document.getElementById('taken-refresh-btn').style.display = 'none';
+    return;
+  }
+  klasSelect.innerHTML = '<option value="">— kies Classroom-klas —</option>' +
+    db.classroomKlassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+  document.getElementById('taken-refresh-btn').style.display = 'inline-block';
+}
 
-    const kol=(emo,titel,namen,volgStatus,klasse)=>{
-      const btns=namen.map(n=>`<span class="lln-tag ${klasse}">${n}<button onclick="setStatus(${taak.id},'${n}','${volgStatus}')" title="Volgende stap">→</button></span>`).join('');
-      return`<div><div class="taak-col-title">${emo} ${titel} (${namen.length})</div>${namen.length?btns:'<span style="font-size:0.8rem;color:#ddd">—</span>'}</div>`;
-    };
+async function laadTaken() {
+  const gid = document.getElementById('taken-groep').value;
+  const klasId = document.getElementById('taken-classroom-klas').value;
+  const groep = db.groepen.find(g => g.id == gid);
+  const cont = document.getElementById('taken-container');
+  const syncBar = document.getElementById('taken-sync-bar');
 
-    return`<div class="taak-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
-        <div><div style="font-weight:600;font-size:0.95rem;">${taak.naam}</div>
-          <div style="font-size:0.8rem;color:#888;">${taak.deadline?'📅 '+taak.deadline+' · ':''}${lesnamen?'📌 '+lesnamen:''}</div></div>
-        <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
-          <span class="badge ${pct===100?'green':'blue'}">${klaar}/${totaal} afgerond</span>
-          ${groepen.remediering.length>0?`<span class="badge purple">🔄 ${groepen.remediering.length} rem.</span>`:''}
-          <button class="btn xs danger" onclick="verwijderTaak(${taak.id})">🗑</button>
+  if (!groep || !klasId) {
+    cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div>';
+    syncBar.style.display = 'none';
+    return;
+  }
+
+  if (!googleToken) {
+    cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom.</div>';
+    syncBar.style.display = 'none';
+    return;
+  }
+
+  syncBar.style.display = 'block';
+  syncBar.textContent = '⏳ Taken ophalen uit Classroom…';
+  cont.innerHTML = '';
+
+  try {
+    // Haal taken op
+    const takenResp = await fetch(
+      `https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?orderBy=dueDate+desc&pageSize=50`,
+      { headers: { Authorization: 'Bearer ' + googleToken } }
+    );
+    const takenData = await takenResp.json();
+    const classroomTaken = takenData.courseWork || [];
+
+    if (classroomTaken.length === 0) {
+      syncBar.style.display = 'none';
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Geen taken gevonden in deze Classroom-klas.</div>';
+      return;
+    }
+
+    syncBar.textContent = `⏳ Statussen ophalen voor ${classroomTaken.length} taken…`;
+
+    // Haal inzendingen op voor alle taken parallel
+    const inzendingen = await Promise.all(classroomTaken.map(taak =>
+      fetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${taak.id}/studentSubmissions?pageSize=100`,
+        { headers: { Authorization: 'Bearer ' + googleToken } }
+      ).then(r => r.json()).then(d => ({ taakId: taak.id, subs: d.studentSubmissions || [] }))
+    ));
+
+    // Bouw lookup: taakId -> { studentId -> submission }
+    const subMap = {};
+    inzendingen.forEach(({ taakId, subs }) => {
+      subMap[taakId] = {};
+      subs.forEach(sub => { subMap[taakId][sub.userId] = sub; });
+    });
+
+    // Haal leerlingenlijst op uit Classroom om userId -> naam te mappen
+    // We gebruiken de al geïmporteerde groep voor naamkoppeling
+    // Haal userId's op via roster
+    const rosterResp = await fetch(
+      `https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`,
+      { headers: { Authorization: 'Bearer ' + googleToken } }
+    );
+    const rosterData = await rosterResp.json();
+    const students = rosterData.students || [];
+
+    // userId -> volledige naam
+    const userIdNaam = {};
+    students.forEach(s => { userIdNaam[s.userId] = s.profile.name.fullName; });
+
+    // Filter: enkel leerlingen die in portaalgroep zitten
+    const groepNamen = new Set(groep.leerlingen);
+    const relevantStudents = students.filter(s => groepNamen.has(s.profile.name.fullName));
+
+    syncBar.style.display = 'none';
+
+    if (relevantStudents.length === 0) {
+      cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a;">⚠ Geen leerlingen uit deze portaalgroep gevonden in de Classroom-klas.<br><span style="font-size:0.85rem;color:#aaa;">Controleer of de namen exact overeenkomen.</span></div>';
+      return;
+    }
+
+    // Render taken
+    cont.innerHTML = classroomTaken.map(taak => {
+      const deadline = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
+      const groepen = { niet_ingediend:[], ingediend:[], remediering:[], afgerond:[] };
+
+      relevantStudents.forEach(s => {
+        const naam = s.profile.name.fullName;
+        const sub = subMap[taak.id]?.[s.userId];
+        const status = classroomNaarPortaalStatus(sub);
+        (groepen[status] || groepen.niet_ingediend).push(naam);
+      });
+
+      const totaal = relevantStudents.length;
+      const klaar = groepen.afgerond.length;
+      const pct = totaal > 0 ? Math.round(klaar / totaal * 100) : 0;
+
+      const kol = (emo, titel, namen, klasse) => {
+        const tags = namen.map(n => `<span class="lln-tag ${klasse}">${n}</span>`).join('');
+        return `<div><div class="taak-col-title">${emo} ${titel} (${namen.length})</div>${namen.length ? tags : '<span style="font-size:0.8rem;color:#ddd">—</span>'}</div>`;
+      };
+
+      const classroomUrl = `https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
+
+      return `<div class="taak-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
+          <div>
+            <div style="font-weight:600;font-size:0.95rem;">${taak.title}</div>
+            <div style="font-size:0.8rem;color:#888;">${deadline ? '📅 ' + deadline : ''}
+              <a href="${classroomUrl}" target="_blank" style="color:#378add;margin-left:0.5rem;font-size:0.78rem;">↗ Open in Classroom</a>
+            </div>
+          </div>
+          <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
+            <span class="badge ${pct===100?'green':'blue'}">${klaar}/${totaal} afgerond</span>
+            ${groepen.remediering.length > 0 ? `<span class="badge purple">🔄 ${groepen.remediering.length} rem.</span>` : ''}
+          </div>
         </div>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="taak-cols">
-        ${kol('❌','Niet ingediend',groepen.niet_ingediend,'ingediend','')}
-        ${kol('📥','Ingediend',groepen.ingediend,'nagekeken','oranje')}
-        ${kol('✅','Nagekeken',groepen.nagekeken,'remediering','groen')}
-        ${kol('🔄','Remediering',groepen.remediering,'remediering_ingediend','paars')}
-        ${kol('📬','Rem. ingediend',groepen.remediering_ingediend,'nagekeken','oranje')}
-        ${kol('🏁','Afgerond',groepen.afgerond,'afgerond','groen')}
-      </div>
-      <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.75rem;flex-wrap:wrap;">
-        <button class="btn xs outline" onclick="bulkStatus(${taak.id},'nagekeken','afgerond')">✓ Nagekeken → Afgerond</button>
-        <button class="btn xs outline" onclick="bulkStatus(${taak.id},'remediering_ingediend','nagekeken')">✓ Rem. ingediend → Nakijken</button>
-      </div>
-    </div>`;
-  }).join('');
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="taak-cols" style="margin-top:0.85rem;">
+          ${kol('❌', 'Niet ingediend', groepen.niet_ingediend, '')}
+          ${kol('📥', 'Ingediend', groepen.ingediend, 'oranje')}
+          ${kol('🔄', 'Remediering', groepen.remediering, 'paars')}
+          ${kol('🏁', 'Afgerond', groepen.afgerond, 'groen')}
+        </div>
+        <div style="margin-top:0.6rem;font-size:0.78rem;color:#bbb;">📡 Live uit Google Classroom</div>
+      </div>`;
+    }).join('');
+
+    // Sla classroom klassen op voor hergebruik
+    if (!db.classroomKlassen) db.classroomKlassen = [];
+
+  } catch(e) {
+    syncBar.style.display = 'none';
+    cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a;">⚠ Fout bij ophalen: ${e.message}</div>`;
+  }
 }
 
-function setStatus(tid,naam,status){
-  const t=db.taken.find(t=>t.id==tid);if(!t)return;
-  if(!t.statussen)t.statussen={};
-  t.statussen[naam]=status; save(); laadTaken();
-}
-function bulkStatus(tid,van,naar){
-  const t=db.taken.find(t=>t.id==tid);if(!t)return;
-  if(!t.statussen)t.statussen={};
-  (t.toegewezen||[]).forEach(n=>{if((t.statussen[n]||'niet_ingediend')===van)t.statussen[n]=naar;});
-  save(); laadTaken();
-}
-function verwijderTaak(id){if(!confirm('Taak verwijderen?'))return;db.taken=db.taken.filter(t=>t.id!=id);save();laadTaken();}
+function setStatus(tid,naam,status){ /* niet meer gebruikt — statussen komen uit Classroom */ }
+function bulkStatus(tid,van,naar){ /* niet meer gebruikt */ }
+function verwijderTaak(id){ /* niet meer gebruikt */ }
 
 // TAAK MODAL
 function openNieuweTaakModal(){
@@ -745,7 +858,7 @@ function slaMailOp(){
 
 // GOOGLE CLASSROOM
 const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
 let googleToken = null;
 
 function koppelGoogle() {
