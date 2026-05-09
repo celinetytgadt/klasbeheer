@@ -134,14 +134,11 @@ tr:last-child td { border-bottom: none; }
 <div id="tab-taken" class="section">
   <div class="card">
     <div class="row" style="margin-bottom:0;">
-      <label class="lbl">Portaalgroep</label>
-      <select id="taken-groep" onchange="takenGroepWisselde()"></select>
-      <label class="lbl">Classroom-klas</label>
-      <select id="taken-classroom-klas" onchange="laadTaken()" style="min-width:200px;">
-        <option value="">— kies eerst een groep —</option>
+      <label class="lbl">Classroom</label>
+      <select id="taken-klas" onchange="laadTaken()" style="min-width:240px">
+        <option value="">— kies een klas —</option>
       </select>
-      <button class="btn sm outline" id="taken-refresh-btn" onclick="laadTaken()" style="display:none;">🔄 Vernieuwen</button>
-      <span style="font-size:0.8rem;color:#aaa;margin-left:0.5rem;">📡 Taken komen live uit Classroom</span>
+      <span id="taken-status" style="font-size:.82rem;color:#aaa"></span>
     </div>
   </div>
   <div id="taken-sync-bar" style="display:none;" class="info-bar">⏳ Taken ophalen uit Classroom…</div>
