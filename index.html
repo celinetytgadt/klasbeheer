@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+v<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.2</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.3</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -467,9 +467,14 @@ function slaaTaakOp() {
 // ── TAKEN (CLASSROOM) ─────────────────────────────────────────────────────────
 function vulTakenKlassen() {
   const sel = document.getElementById('taken-klas');
-  const klassen = db.classroomKlassen || [];
+  // Toon enkel klassen die ook als portaalgroep bestaan OF expliciet geselecteerd zijn
+  const alle = db.classroomKlassen || [];
+  const groepNamen = new Set(db.groepen.map(g => g.naam.toLowerCase()));
+  const klassen = alle.filter(k => groepNamen.has(k.naam.toLowerCase()));
+  // Als filter niets oplevert (namen komen niet overeen), toon alle
+  const tonen = klassen.length ? klassen : alle;
   const cur = sel.value;
-  if (!klassen.length) {
+  if (!tonen.length) {
     sel.innerHTML = '<option value="">— importeer eerst —</option>';
     document.getElementById('taken-container').innerHTML = `<div style="text-align:center;padding:2rem;color:#aaa">
       <p style="margin-bottom:.75rem">Classroom-klassen nog niet geladen.</p>
@@ -479,10 +484,11 @@ function vulTakenKlassen() {
     </div>`;
     return;
   }
-  sel.innerHTML = '<option value="">— kies een klas —</option>' + klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+  sel.innerHTML = '<option value="">— kies een klas —</option>' + tonen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
   if (cur) sel.value = cur;
   // Als token leeg maar was verbonden: haal token op
-  if (!googleToken && localStorage.getItem('lkr_google') === '1') koppelGoogle();
+  // Token ophalen indien nodig
+if (!googleToken && localStorage.getItem('lkr_google') === '1') koppelGoogle();
 }
 
 async function laadTaken() {
@@ -856,20 +862,25 @@ function laadGScript(cb) {
   const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.onload=cb; document.head.appendChild(s);
 }
 
+let _googleBezig = false;
 function koppelGoogle() {
+  if (_googleBezig) return; // voorkom dubbele popup
+  _googleBezig = true;
   laadGScript(() => {
     google.accounts.oauth2.initTokenClient({ client_id:GKEY, scope:GSCOPE, callback:(r) => {
-      if (r.error) { alert('Aanmelden mislukt: '+r.error); return; }
+      _googleBezig = false;
+      if (r.error) {
+        if (r.error !== 'popup_closed_by_user') alert('Aanmelden mislukt: '+r.error);
+        return;
+      }
       googleToken = r.access_token;
       localStorage.setItem('lkr_google','1');
       fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+googleToken}})
         .then(x=>x.json()).then(info => {
           localStorage.setItem('lkr_google_naam', info.name||'');
           zetVerbUI(true);
-          window._mijnUserId = null; // reset zodat userinfo opnieuw opgehaald wordt
-          // Herlaad taken als tab actief is
+          window._mijnUserId = null;
           if (document.getElementById('tab-taken').classList.contains('active')) laadTaken();
-          // Callback als iemand wachtte op token
           if (window._naToken) { window._naToken(); window._naToken=null; }
         });
     }}).requestAccessToken();
@@ -883,15 +894,16 @@ function zetVerbUI(v) {
 }
 function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
 
-async function gFetch(url) {
+async function gFetch(url, retry=true) {
   const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
-  if (r.status===401) {
-    // Token verlopen — reset en vraag opnieuw aan
+  if (r.status===401 && retry) {
+    // Token verlopen — eenmalig opnieuw aanmelden
     googleToken=null;
-    return new Promise((resolve,reject) => {
-      window._naToken = () => gFetch(url).then(resolve).catch(reject);
+    await new Promise((resolve,reject) => {
+      window._naToken = resolve;
       koppelGoogle();
     });
+    return gFetch(url, false); // retry=false voorkomt oneindige loop
   }
   if (!r.ok) throw new Error(r.status+' '+r.statusText);
   return r.json();
