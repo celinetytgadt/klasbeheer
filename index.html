@@ -416,10 +416,11 @@ function classroomNaarPortaalStatus(sub) {
 
 function vulTakenKlassen() {
   const sel = document.getElementById('taken-klas');
-  const klassen = db.classroomKlassen || [];
+  // Enkel klassen tonen die ook als portaalgroep geïmporteerd zijn
+  const geimporteerd = db.classroomKlassen || [];
   const cur = sel.value;
-  if(!klassen.length){sel.innerHTML='<option value="">— eerst importeren via Instellingen —</option>';return;}
-  sel.innerHTML='<option value="">— kies een klas —</option>'+klassen.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
+  if(!geimporteerd.length){sel.innerHTML='<option value="">— eerst importeren via Instellingen —</option>';return;}
+  sel.innerHTML='<option value="">— kies een klas —</option>'+geimporteerd.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
   if(cur) sel.value=cur;
 }
 
@@ -448,11 +449,32 @@ async function laadTaken() {
     // Taken ophalen
     const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
     const alleTaken = takenData.courseWork || [];
-    const mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
+    // Haal topics op voor filter
+    let topicsMap = {};
+    try {
+      const topicsData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/topics?pageSize=100`);
+      (topicsData.topic||[]).forEach(t => topicsMap[t.topicId] = t.name);
+    } catch(e) { /* topics ophalen mislukt — geen filter */ }
+
+    // Filter op eigen taken via creatorUserId
+    let mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
+    const gefiltered = mijnTaken.length > 0;
+
+    // Debug info tonen
+    const debugInfo = `Gevonden: ${alleTaken.length} taken totaal, ${mijnTaken.length} van jou (ID: ${window._mijnUserId}). Topics: ${JSON.stringify(Object.values(topicsMap))}`;
+    console.log(debugInfo);
 
     if(!mijnTaken.length){
+      // Toon debug info zodat we kunnen zien wat er misloopt
       sync.style.display='none';
-      cont.innerHTML='<div style="text-align:center;padding:2rem;color:#bbb">Geen taken van jou gevonden in deze klas.</div>';
+      const uniekeCreators = [...new Set(alleTaken.map(t=>t.creatorUserId))];
+      cont.innerHTML=`<div style="background:#fef3e0;border:1px solid #ef9f27;border-radius:10px;padding:1rem;font-size:.85rem;">
+        <strong>⚠ Geen taken van jou gevonden.</strong><br><br>
+        Jouw gebruikers-ID: <code>${window._mijnUserId}</code><br>
+        Makers van taken in deze klas: <code>${uniekeCreators.join(', ')}</code><br><br>
+        Topics in deze klas: <strong>${Object.values(topicsMap).join(', ')||'geen'}</strong><br><br>
+        <span style="color:#666">Kopieer deze info en stuur ze door zodat we het filter kunnen instellen.</span>
+      </div>`;
       return;
     }
 
@@ -484,7 +506,7 @@ async function laadTaken() {
     );
 
     sync.style.display='none';
-    status.textContent=`${lopend.length} lopend · ${mijnTaken.length-lopend.length} afgerond verborgen`;
+    status.textContent=`${lopend.length} lopend · ${mijnTaken.length-lopend.length} afgerond verborgen${!gefiltered?' · (alle taken, filter niet actief)':''}`;
 
     if(!lopend.length){
       cont.innerHTML='<div style="text-align:center;padding:2rem;color:#3b6d11;background:#eaf3de;border-radius:10px;border:1px solid #639922">🎉 Alle taken zijn afgerond!</div>';
@@ -855,6 +877,16 @@ async function importeerClassroom() {
   }
 }
 
+function selecteerEnkelBestaande() {
+  document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(cb => {
+    const idx = +cb.dataset.idx;
+    const modal = document.getElementById('modal-import');
+    const klas = modal._klassen[idx];
+    const bestaand = db.groepen.find(g => g.naam.toLowerCase() === klas.naam.toLowerCase());
+    cb.checked = !!bestaand;
+  });
+}
+
 function toonImportModal(klassen) {
   // Maak modal dynamisch aan als die nog niet bestaat
   let modal = document.getElementById('modal-import');
@@ -865,9 +897,10 @@ function toonImportModal(klassen) {
     modal.innerHTML = `<div class="modal wide">
       <h3>📥 Importeren uit Google Classroom</h3>
       <p style="font-size:0.85rem;color:#666;margin-bottom:0.5rem;">Kies welke klassen je wil importeren. Bestaande groepen worden bijgewerkt.</p>
-      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
         <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=true)">Alles selecteren</button>
         <button class="btn xs outline" onclick="document.querySelectorAll('#import-klassen-lijst input[type=checkbox]').forEach(c=>c.checked=false)">Alles deselecteren</button>
+        <button class="btn xs outline" onclick="selecteerEnkelBestaande()">↻ Enkel bestaande bijwerken</button>
       </div>
       <div id="import-klassen-lijst"></div>
       <div class="modal-footer">
