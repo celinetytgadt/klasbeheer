@@ -474,10 +474,16 @@ async function laadTaken() {
     return;
   }
 
-  if (!googleToken) {
-    cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom.</div>';
-    syncBar.style.display = 'none';
-    return;
+  // Zorg voor geldig token — vernieuw stil indien verlopen
+  if (!tokenGeldig()) {
+    syncBar.style.display = 'block';
+    syncBar.textContent = '⏳ Verbinding vernieuwen…';
+    const ok = await new Promise(resolve => vernieuwTokenStil(resolve));
+    if (!ok) {
+      syncBar.style.display = 'none';
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom koppeling.</div>';
+      return;
+    }
   }
 
   syncBar.style.display = 'block';
@@ -859,48 +865,109 @@ function slaMailOp(){
 // GOOGLE CLASSROOM
 const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
-let googleToken = null;
 
-function koppelGoogle() {
-  // Laad Google Identity Services script als het nog niet geladen is
-  if (!window.google?.accounts) {
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.onload = () => startGoogleAuth();
-    document.head.appendChild(script);
-  } else {
-    startGoogleAuth();
-  }
+// Token wordt in memory gehouden + verloopdatum bijgehouden
+let googleToken = null;
+let googleTokenExpiry = null; // timestamp in ms
+
+function tokenGeldig() {
+  return googleToken && googleTokenExpiry && Date.now() < googleTokenExpiry;
 }
 
-function startGoogleAuth() {
+function laadGoogleScript(callback) {
+  if (window.google?.accounts) { callback(); return; }
+  const script = document.createElement('script');
+  script.src = 'https://accounts.google.com/gsi/client';
+  script.onload = callback;
+  document.head.appendChild(script);
+}
+
+// Stil token vernieuwen zonder popup — werkt als gebruiker al eerder toestemming gaf
+function vernieuwTokenStil(callback) {
+  laadGoogleScript(() => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_SCOPES,
+      prompt: '', // geen popup als toestemming al gegeven
+      callback: (resp) => {
+        if (resp.error) { if (callback) callback(false); return; }
+        googleToken = resp.access_token;
+        googleTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+        zetVerbondenUI(true);
+        if (callback) callback(true);
+      }
+    });
+    client.requestAccessToken({ prompt: '' });
+  });
+}
+
+function koppelGoogle() {
+  laadGoogleScript(() => startGoogleAuth(true));
+}
+
+function startGoogleAuth(metPopup) {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: GOOGLE_SCOPES,
     callback: (resp) => {
       if (resp.error) { alert('Aanmelden mislukt: ' + resp.error); return; }
       googleToken = resp.access_token;
-      // Haal gebruikersnaam op
+      googleTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+      // Sla verbonden-status op zodat we bij herstart weten dat we stilletjes kunnen vernieuwen
+      localStorage.setItem('lkr_google_verbonden', '1');
       fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: 'Bearer ' + googleToken }
       }).then(r=>r.json()).then(info => {
-        document.getElementById('google-status-blok').style.display = 'none';
-        document.getElementById('google-verbonden-blok').style.display = 'block';
-        document.getElementById('google-gebruiker').textContent = '✓ Verbonden als ' + (info.name || info.email || 'Google gebruiker');
+        localStorage.setItem('lkr_google_naam', info.name || 'Google gebruiker');
+        zetVerbondenUI(true);
       });
     }
   });
-  client.requestAccessToken();
+  client.requestAccessToken(metPopup ? {} : { prompt: '' });
+}
+
+function zetVerbondenUI(verbonden) {
+  document.getElementById('google-status-blok').style.display = verbonden ? 'none' : 'block';
+  document.getElementById('google-verbonden-blok').style.display = verbonden ? 'block' : 'none';
+  if (verbonden) {
+    const naam = localStorage.getItem('lkr_google_naam') || 'Google gebruiker';
+    document.getElementById('google-gebruiker').textContent = '✓ Verbonden als ' + naam;
+  }
+}
+
+// Zorg voor geldig token voor een API-call — vernieuwt stil indien nodig
+async function metGeldigToken(fn) {
+  if (tokenGeldig()) return fn(googleToken);
+  return new Promise((resolve) => {
+    vernieuwTokenStil((ok) => {
+      if (ok) resolve(fn(googleToken));
+      else resolve(null); // niet gelukt — gebruiker moet opnieuw klikken
+    });
+  });
 }
 
 function ontkoppelGoogle() {
-  googleToken = null;
-  document.getElementById('google-verbonden-blok').style.display = 'none';
-  document.getElementById('google-status-blok').style.display = 'block';
+  googleToken = null; googleTokenExpiry = null;
+  localStorage.removeItem('lkr_google_verbonden');
+  localStorage.removeItem('lkr_google_naam');
+  zetVerbondenUI(false);
+}
+
+// Bij opstarten: als gebruiker eerder verbonden was, token stilletjes vernieuwen
+function initGoogle() {
+  if (localStorage.getItem('lkr_google_verbonden') === '1') {
+    zetVerbondenUI(true); // toon UI alvast als verbonden
+    laadGoogleScript(() => vernieuwTokenStil((ok) => {
+      if (!ok) { zetVerbondenUI(false); localStorage.removeItem('lkr_google_verbonden'); }
+    }));
+  }
 }
 
 async function importeerClassroom() {
-  if (!googleToken) { alert('Eerst aanmelden met Google.'); return; }
+  if (!tokenGeldig()) {
+    const ok = await new Promise(resolve => vernieuwTokenStil(resolve));
+    if (!ok) { alert('Niet verbonden met Google. Klik eerst op Aanmelden.'); return; }
+  }
   const btn = document.querySelector('#google-verbonden-blok .btn.outline');
   btn.textContent = '⏳ Laden…'; btn.disabled = true;
 
@@ -1041,6 +1108,7 @@ document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('clic
 // INIT
 document.getElementById('aanw-datum').value=new Date().toISOString().split('T')[0];
 vulAlleDD(); checkDeadlines(); setInterval(checkDeadlines,60000);
+initGoogle();
 if(db.groepen.length===0){
   setTimeout(()=>{if(confirm('Welkom!\n\nWil je nu je eerste groep aanmaken?')){showTab('instellingen',document.querySelector('[data-tab=instellingen]'));setTimeout(openGroepModal,200);}},400);
 }
