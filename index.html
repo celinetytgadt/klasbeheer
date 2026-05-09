@@ -326,6 +326,7 @@ tr:last-child td{border-bottom:none}
     <div id="imp-lijst"></div>
     <div class="modal-footer">
       <button class="btn outline sm" onclick="sluit('modal-import')">Annuleren</button>
+      <button class="btn outline sm" onclick="voerImportVervang()">🔄 Vervang klassenlijst</button>
       <button class="btn sm" onclick="voerImport()">✅ Importeren</button>
     </div>
   </div>
@@ -469,8 +470,13 @@ function vulTakenKlassen() {
   const klassen = db.classroomKlassen || [];
   const cur = sel.value;
   if (!klassen.length) {
-    sel.innerHTML = '<option value="">— importeer eerst via Instellingen —</option>';
-    document.getElementById('taken-container').innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa">Ga naar ⚙ Instellingen → Google Classroom → Importeren</div>';
+    sel.innerHTML = '<option value="">— importeer eerst —</option>';
+    document.getElementById('taken-container').innerHTML = `<div style="text-align:center;padding:2rem;color:#aaa">
+      <p style="margin-bottom:.75rem">Classroom-klassen nog niet geladen.</p>
+      <button class="btn sm" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'));setTimeout(importeerClassroom,300)">
+        🔄 Nu importeren
+      </button>
+    </div>`;
     return;
   }
   sel.innerHTML = '<option value="">— kies een klas —</option>' + klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
@@ -879,6 +885,14 @@ function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google'
 
 async function gFetch(url) {
   const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
+  if (r.status===401) {
+    // Token verlopen — reset en vraag opnieuw aan
+    googleToken=null;
+    return new Promise((resolve,reject) => {
+      window._naToken = () => gFetch(url).then(resolve).catch(reject);
+      koppelGoogle();
+    });
+  }
   if (!r.ok) throw new Error(r.status+' '+r.statusText);
   return r.json();
 }
@@ -927,6 +941,16 @@ function toonImportModal(klassen) {
   }).join('');
   document.getElementById('modal-import').classList.add('open');
 }
+function voerImportVervang() {
+  // Zelfde als importeren maar vervangt de volledige klassenlijst
+  const checked=Array.from(document.querySelectorAll('#imp-lijst input[type=checkbox]:checked'));
+  db.classroomKlassen = checked.map(cb => {
+    const k=_importKlassen[+cb.dataset.idx];
+    return {id:k.courseId, naam:k.naam};
+  });
+  voerImport();
+}
+
 function selecteerBestaande() {
   document.querySelectorAll('#imp-lijst input[type=checkbox]').forEach(cb => {
     const k=_importKlassen[+cb.dataset.idx];
