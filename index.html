@@ -247,45 +247,25 @@ tr:last-child td { border-bottom: none; }
     </div>
     <input type="hidden" id="groep-edit-id">
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-groep')">Annuleren</button>
+      <button class="btn outline sm" onclick="sluit('modal-groep')">Annuleren</button>
       <button class="btn sm" onclick="slaGroepOp()">Opslaan</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: TAAK -->
-<div class="modal-backdrop" id="modal-taak">
-  <div class="modal">
-    <h3>Nieuwe taak</h3>
-    <div class="form-group"><label>Naam</label><input type="text" id="taak-naam" placeholder="bv. Oefeningen H4"></div>
-    <div class="form-group"><label>Deadline (optioneel)</label><input type="date" id="taak-deadline"></div>
-    <div class="form-group"><label>Groep</label><select id="taak-groep" onchange="taakGroepWisselde()"></select></div>
-    <div class="form-group">
-      <label>Gekoppelde lessen (wie aanwezig was krijgt de taak)</label>
-      <div id="taak-lessen-lijst" style="max-height:200px;overflow-y:auto;border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-taak')">Annuleren</button>
-      <button class="btn sm" onclick="slaaTaakOp()">Aanmaken</button>
-    </div>
-  </div>
-</div>
+<!-- taak modal verwijderd -->
 
 <!-- MODAL: NA OPSLAAN -->
 <div class="modal-backdrop" id="modal-na-opslaan">
   <div class="modal">
     <h3>✅ Aanwezigheid opgeslagen!</h3>
-    <p style="font-size:0.88rem;color:#555;margin-bottom:0.75rem;">Wil je een taak koppelen aan deze les?</p>
-    <div id="na-opslaan-lesinfo" style="font-weight:600;margin-bottom:1rem;color:#1e3a5f;"></div>
-    <div class="form-group">
-      <label>Koppel aan bestaande taak</label>
-      <select id="na-opslaan-taak-keuze" style="width:100%"><option value="">-- kies taak --</option></select>
-    </div>
-    <div style="text-align:center;color:#aaa;font-size:0.82rem;margin:0.5rem 0;">— of —</div>
-    <button class="btn sm outline" onclick="naOpslaanNieuweTaak()" style="width:100%">+ Nieuwe taak aanmaken voor deze les</button>
+    <p style="font-size:.88rem;color:#555;margin-bottom:.75rem">Wil je een deadline-taak aanmaken voor deze les? (optioneel — voor de 🔔 deadline-waarschuwingen)</p>
+    <div id="na-les-info" style="font-weight:600;margin-bottom:1rem;color:#1e3a5f"></div>
+    <div class="form-group"><label>Naam van de taak</label><input type="text" id="na-taak-naam" placeholder="bv. Oefeningen H4 — leeg laten om over te slaan"></div>
+    <div class="form-group"><label>Deadline</label><input type="date" id="na-taak-deadline"></div>
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-na-opslaan')">Sluiten</button>
-      <button class="btn sm" onclick="koppelTaakAanLes()">Koppelen</button>
+      <button class="btn outline sm" onclick="sluit('modal-na-opslaan')">Sluiten</button>
+      <button class="btn sm" onclick="slaaTaakOp()">Taak aanmaken</button>
     </div>
   </div>
 </div>
@@ -297,7 +277,7 @@ tr:last-child td { border-bottom: none; }
     <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Leerlingen die de eerste inlevering gemist hebben. Vink aan wie een mail krijgt.</p>
     <div id="deadline-inhoud"></div>
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-deadlines')">Sluiten</button>
+      <button class="btn outline sm" onclick="sluit('modal-deadlines')">Sluiten</button>
       <button class="btn sm" onclick="stuurGeselecteerdeMails()">✉ Teksten opstellen</button>
     </div>
   </div>
@@ -319,7 +299,7 @@ tr:last-child td { border-bottom: none; }
     <div id="mail-preview-tekst" style="background:#f5f7fb;border:1px solid #e2e6ed;border-radius:7px;padding:1rem;font-size:0.85rem;white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6;"></div>
     <div style="margin-top:0.75rem;font-size:0.82rem;color:#888;">👤 Coach: <span id="mail-preview-to"></span></div>
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-mail')">Annuleren</button>
+      <button class="btn outline sm" onclick="sluit('modal-mail')">Annuleren</button>
       <button class="btn sm" id="btn-kopieer-mail" onclick="kopieerMailTekst()">📋 Kopiëren</button>
     </div>
   </div>
@@ -349,7 +329,7 @@ function showTab(naam, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + naam).classList.add('active');
   if (btn) btn.classList.add('active');
-  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: () => { vulDD('taken-groep'); takenGroepWisselde(); }, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
+  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: vulTakenKlassen, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
 }
 
 // DROPDOWNS
@@ -359,7 +339,7 @@ function vulDD(id, sel) {
   el.innerHTML = db.groepen.length === 0 ? '<option value="">— Eerst een groep aanmaken in Instellingen —</option>' : db.groepen.map(g => `<option value="${g.id}">${g.naam}</option>`).join('');
   if (cur) el.value = cur;
 }
-function vulAlleDD() { ['aanw-groep','taken-groep','overzicht-groep','taak-groep'].forEach(id => vulDD(id)); }
+
 
 // AANWEZIGHEID
 function laadAanwezigheid() {
@@ -413,23 +393,13 @@ function slaAanwezigheidOp() {
   if(!gid||!datum||!les)return;
   save();
   lesCtx = {gid, datum, les, key: gid+'|'+datum+'|'+les};
-  document.getElementById('na-opslaan-lesinfo').textContent = `📌 ${les} — ${datum}`;
-  const taken = db.taken.filter(t=>t.gid==gid);
-  document.getElementById('na-opslaan-taak-keuze').innerHTML = '<option value="">-- kies taak --</option>' + taken.map(t=>`<option value="${t.id}">${t.naam}</option>`).join('');
+  window._lesCtx={gid,datum,les,key:`${gid}|${datum}|${les}`};
+  document.getElementById('na-les-info').textContent = `📌 ${les} — ${datum}`;
+  document.getElementById('na-taak-naam').value='';
+  document.getElementById('na-taak-deadline').value='';
   document.getElementById('modal-na-opslaan').classList.add('open');
 }
-function koppelTaakAanLes() {
-  const tid=document.getElementById('na-opslaan-taak-keuze').value;
-  if(!tid||!lesCtx){sluitModal('modal-na-opslaan');return;}
-  const taak=db.taken.find(t=>t.id==tid); if(!taak)return;
-  if(!taak.lessen)taak.lessen=[];
-  if(!taak.lessen.includes(lesCtx.key))taak.lessen.push(lesCtx.key);
-  herbereken(taak); save(); sluitModal('modal-na-opslaan');
-}
-function naOpslaanNieuweTaak() {
-  sluitModal('modal-na-opslaan');
-  setTimeout(()=>{ vulDD('taak-groep',lesCtx?.gid); taakGroepWisselde(lesCtx?.key); document.getElementById('modal-taak').classList.add('open'); },200);
-}
+// koppelTaakAanLes verwijderd
 
 // TAKEN
 // Vertaal Classroom-status naar portaalstatus
@@ -447,274 +417,121 @@ function classroomNaarPortaalStatus(sub) {
   return 'niet_ingediend'; // NEW, CREATED, RECLAIMED_BY_STUDENT
 }
 
-function takenGroepWisselde() {
-  const gid = document.getElementById('taken-groep').value;
-  const groep = db.groepen.find(g => g.id == gid);
-  const klasSelect = document.getElementById('taken-classroom-klas');
-  const refreshBtn = document.getElementById('taken-refresh-btn');
-
-  // Classroom-klassen komen uit db.classroomKlassen (opgeslagen bij import)
+function vulTakenKlassen() {
+  const sel = document.getElementById('taken-klas');
   const klassen = db.classroomKlassen || [];
-
-  if (!groep) {
-    klasSelect.innerHTML = '<option value="">— kies eerst een portaalgroep —</option>';
-    refreshBtn.style.display = 'none';
-    return;
-  }
-
-  if (klassen.length === 0) {
-    // Geen klassen opgeslagen — toon verbinden knop
-    klasSelect.innerHTML = '<option value="">— klik op Verbinden —</option>';
-    refreshBtn.style.display = 'inline-block';
-    refreshBtn.textContent = '🔑 Verbinden';
-    refreshBtn.onclick = () => verbindEnLaadKlassen();
-    return;
-  }
-
-  klasSelect.innerHTML = '<option value="">— kies Classroom-klas —</option>' +
-    klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
-  refreshBtn.style.display = 'inline-block';
-  refreshBtn.textContent = '🔄 Vernieuwen';
-  refreshBtn.onclick = () => laadTaken();
-}
-
-async function verbindEnLaadKlassen() {
-  const btn = document.getElementById('taken-refresh-btn');
-  btn.textContent = '⏳ Bezig…'; btn.disabled = true;
-  try {
-    await new Promise((resolve, reject) => {
-      laadGoogleScript(() => {
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
-          callback: (resp) => {
-            if (resp.error) reject(new Error(resp.error));
-            else { _tokenBeschikbaar(resp.access_token); resolve(); }
-          }
-        });
-        client.requestAccessToken();
-      });
-    });
-    // Haal klassen op en sla op
-    const resp = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30',
-      { headers: { Authorization: 'Bearer ' + googleToken } });
-    const data = await resp.json();
-    db.classroomKlassen = (data.courses || []).map(c => ({ id: c.id, naam: c.name }));
-    save();
-    localStorage.setItem('lkr_google_verbonden', '1');
-    zetVerbondenUI(true);
-    takenGroepWisselde(); // herlaad dropdown met klassen
-  } catch(e) {
-    alert('Verbinden mislukt: ' + e.message);
-  } finally {
-    btn.disabled = false;
-  }
+  const cur = sel.value;
+  if(!klassen.length){sel.innerHTML='<option value="">— eerst importeren via Instellingen —</option>';return;}
+  sel.innerHTML='<option value="">— kies een klas —</option>'+klassen.map(k=>`<option value="${k.id}">${k.naam}</option>`).join('');
+  if(cur) sel.value=cur;
 }
 
 async function laadTaken() {
-  const gid = document.getElementById('taken-groep').value;
-  const klasId = document.getElementById('taken-classroom-klas').value;
-  const groep = db.groepen.find(g => g.id == gid);
+  const klasId = document.getElementById('taken-klas').value;
   const cont = document.getElementById('taken-container');
-  const syncBar = document.getElementById('taken-sync-bar');
+  const sync = document.getElementById('taken-sync');
+  const status = document.getElementById('taken-status');
+  if(!klasId){cont.innerHTML='<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas</div>';return;}
 
-  if (!groep || !klasId) {
-    if (groep && !klasId) {
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Kies een Classroom-klas uit de dropdown hierboven</div>';
-    } else {
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div>';
-    }
-    syncBar.style.display = 'none';
-    return;
+  if(!googleToken) {
+    cont.innerHTML='<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    sync.style.display='none'; return;
   }
 
-  // Zorg voor geldig token — vraag aan indien nodig
-  if (!googleToken) {
-    if (localStorage.getItem('lkr_google_verbonden') !== '1') {
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom koppeling en meld aan.</div>';
-      syncBar.style.display = 'none';
-      return;
-    }
-    // Verbonden maar token nog niet beschikbaar — vraag token op via popup
-    syncBar.style.display = 'block';
-    syncBar.textContent = '⏳ Verbinding maken met Google…';
-    try {
-      await new Promise((resolve, reject) => {
-        laadGoogleScript(() => {
-          const client = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
-            callback: (resp) => {
-              if (resp.error) reject(new Error(resp.error));
-              else { _tokenBeschikbaar(resp.access_token); resolve(); }
-            }
-          });
-          client.requestAccessToken();
-        });
-      });
-    } catch(e) {
-      syncBar.style.display = 'none';
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Aanmelden mislukt. Probeer opnieuw via Instellingen.</div>';
-      return;
-    }
-  }
-
-  syncBar.style.display = 'block';
-  syncBar.textContent = '⏳ Taken ophalen uit Classroom…';
-  cont.innerHTML = '';
+  sync.style.display='block'; sync.textContent='⏳ Taken ophalen…'; cont.innerHTML=''; status.textContent='';
 
   try {
-    // Haal taken op
-    const takenResp = await fetch(
-      `https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?orderBy=dueDate+desc&pageSize=50`,
-      { headers: { Authorization: 'Bearer ' + googleToken } }
-    );
-    const takenData = await takenResp.json();
-    const classroomTaken = takenData.courseWork || [];
+    // Gebruiker-ID voor filter op eigen taken
+    if(!window._mijnUserId){
+      const me = await gFetch('https://www.googleapis.com/oauth2/v3/userinfo');
+      window._mijnUserId = me.sub;
+    }
 
-    if (classroomTaken.length === 0) {
-      syncBar.style.display = 'none';
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Geen taken gevonden in deze Classroom-klas.</div>';
+    // Taken ophalen
+    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
+    const alleTaken = takenData.courseWork || [];
+    const mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
+
+    if(!mijnTaken.length){
+      sync.style.display='none';
+      cont.innerHTML='<div style="text-align:center;padding:2rem;color:#bbb">Geen taken van jou gevonden in deze klas.</div>';
       return;
     }
 
-    syncBar.textContent = `⏳ Statussen ophalen voor ${classroomTaken.length} taken…`;
-
-    // Haal inzendingen op voor alle taken parallel
-    const inzendingen = await Promise.all(classroomTaken.map(taak =>
-      fetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${taak.id}/studentSubmissions?pageSize=100`,
-        { headers: { Authorization: 'Bearer ' + googleToken } }
-      ).then(r => r.json()).then(d => ({ taakId: taak.id, subs: d.studentSubmissions || [] }))
-    ));
-
-    // Bouw lookup: taakId -> { studentId -> submission }
-    const subMap = {};
-    inzendingen.forEach(({ taakId, subs }) => {
-      subMap[taakId] = {};
-      subs.forEach(sub => { subMap[taakId][sub.userId] = sub; });
-    });
-
-    // Haal leerlingenlijst op uit Classroom om userId -> naam te mappen
-    // We gebruiken de al geïmporteerde groep voor naamkoppeling
-    // Haal userId's op via roster
-    const rosterResp = await fetch(
-      `https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`,
-      { headers: { Authorization: 'Bearer ' + googleToken } }
-    );
-    const rosterData = await rosterResp.json();
+    // Roster
+    sync.textContent=`⏳ Statussen laden voor ${mijnTaken.length} taken…`;
+    const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`);
     const students = rosterData.students || [];
+    const uidNaam = {};
+    students.forEach(s => uidNaam[s.userId] = s.profile.name.fullName);
 
-    // userId -> volledige naam
-    const userIdNaam = {};
-    students.forEach(s => { userIdNaam[s.userId] = s.profile.name.fullName; });
+    // Inzendingen parallel
+    const alleSubs = await Promise.all(mijnTaken.map(t =>
+      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=100`)
+        .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
+    ));
+    const subMap = {};
+    alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
 
-    // Filter: enkel leerlingen die in portaalgroep zitten
-    const groepNamen = new Set(groep.leerlingen);
-    const relevantStudents = students.filter(s => groepNamen.has(s.profile.name.fullName));
+    const vertaal = sub => {
+      if(!sub||sub.state==='NEW'||sub.state==='CREATED') return 'niet_ingediend';
+      if(sub.state==='TURNED_IN') return 'ingediend';
+      if(sub.state==='RETURNED') return sub.assignedGrade!=null ? 'afgerond' : 'remediering';
+      return 'niet_ingediend';
+    };
 
-    syncBar.style.display = 'none';
+    // Filter: enkel lopende taken
+    const lopend = mijnTaken.filter(taak =>
+      students.some(s => vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond')
+    );
 
-    if (relevantStudents.length === 0) {
-      cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a;">⚠ Geen leerlingen uit deze portaalgroep gevonden in de Classroom-klas.<br><span style="font-size:0.85rem;color:#aaa;">Controleer of de namen exact overeenkomen.</span></div>';
+    sync.style.display='none';
+    status.textContent=`${lopend.length} lopend · ${mijnTaken.length-lopend.length} afgerond verborgen`;
+
+    if(!lopend.length){
+      cont.innerHTML='<div style="text-align:center;padding:2rem;color:#3b6d11;background:#eaf3de;border-radius:10px;border:1px solid #639922">🎉 Alle taken zijn afgerond!</div>';
       return;
     }
 
-    // Render taken
-    cont.innerHTML = classroomTaken.map(taak => {
-      const deadline = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
-      const groepen = { niet_ingediend:[], ingediend:[], remediering:[], afgerond:[] };
+    const kol = (emo,t,namen,kl) => `<div><div class="taak-col-title">${emo} ${t} (${namen.length})</div>${namen.length?namen.map(n=>`<span class="lln-tag ${kl}">${n}</span>`).join(''):'<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
 
-      relevantStudents.forEach(s => {
-        const naam = s.profile.name.fullName;
-        const sub = subMap[taak.id]?.[s.userId];
-        const status = classroomNaarPortaalStatus(sub);
-        (groepen[status] || groepen.niet_ingediend).push(naam);
+    cont.innerHTML = lopend.map(taak => {
+      const dl = taak.dueDate?`${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}`:null;
+      const gr = {niet_ingediend:[],ingediend:[],remediering:[],afgerond:[]};
+      students.forEach(s => {
+        const naam = uidNaam[s.userId]||'?';
+        (gr[vertaal(subMap[taak.id]?.[s.userId])]||gr.niet_ingediend).push(naam);
       });
-
-      const totaal = relevantStudents.length;
-      const klaar = groepen.afgerond.length;
-      const pct = totaal > 0 ? Math.round(klaar / totaal * 100) : 0;
-
-      const kol = (emo, titel, namen, klasse) => {
-        const tags = namen.map(n => `<span class="lln-tag ${klasse}">${n}</span>`).join('');
-        return `<div><div class="taak-col-title">${emo} ${titel} (${namen.length})</div>${namen.length ? tags : '<span style="font-size:0.8rem;color:#ddd">—</span>'}</div>`;
-      };
-
-      const classroomUrl = `https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
-
+      const tot=students.length, klaar=gr.afgerond.length;
+      const pct=tot>0?Math.round(klaar/tot*100):0;
+      const url=`https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
       return `<div class="taak-card">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem;">
-          <div>
-            <div style="font-weight:600;font-size:0.95rem;">${taak.title}</div>
-            <div style="font-size:0.8rem;color:#888;">${deadline ? '📅 ' + deadline : ''}
-              <a href="${classroomUrl}" target="_blank" style="color:#378add;margin-left:0.5rem;font-size:0.78rem;">↗ Open in Classroom</a>
-            </div>
-          </div>
-          <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;">
-            <span class="badge ${pct===100?'green':'blue'}">${klaar}/${totaal} afgerond</span>
-            ${groepen.remediering.length > 0 ? `<span class="badge purple">🔄 ${groepen.remediering.length} rem.</span>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
+          <div><div style="font-weight:600;font-size:.95rem">${taak.title}</div>
+            <div style="font-size:.8rem;color:#888">${dl?'📅 '+dl+' · ':''}<a href="${url}" target="_blank" style="color:#378add;font-size:.78rem">↗ Open in Classroom</a></div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+            <span class="badge ${pct===100?'green':'blue'}">${klaar}/${tot} klaar</span>
+            ${gr.remediering.length?`<span class="badge purple">🔄 ${gr.remediering.length}</span>`:''}
           </div>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-        <div class="taak-cols" style="margin-top:0.85rem;">
-          ${kol('❌', 'Niet ingediend', groepen.niet_ingediend, '')}
-          ${kol('📥', 'Ingediend', groepen.ingediend, 'oranje')}
-          ${kol('🔄', 'Remediering', groepen.remediering, 'paars')}
-          ${kol('🏁', 'Afgerond', groepen.afgerond, 'groen')}
+        <div class="taak-cols">
+          ${kol('❌','Niet ingediend',gr.niet_ingediend,'')}
+          ${kol('📥','Ingediend',gr.ingediend,'oranje')}
+          ${kol('🔄','Remediering',gr.remediering,'paars')}
+          ${kol('🏁','Afgerond',gr.afgerond,'groen')}
         </div>
-        <div style="margin-top:0.6rem;font-size:0.78rem;color:#bbb;">📡 Live uit Google Classroom</div>
+        <div style="margin-top:.6rem;font-size:.78rem;color:#bbb">📡 Live uit Google Classroom</div>
       </div>`;
     }).join('');
 
-    // Sla classroom klassen op voor hergebruik
-    if (!db.classroomKlassen) db.classroomKlassen = [];
-
   } catch(e) {
-    syncBar.style.display = 'none';
-    cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a;">⚠ Fout bij ophalen: ${e.message}</div>`;
+    sync.style.display='none';
+    cont.innerHTML=`<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}<br><button class="btn sm outline" style="margin-top:.75rem" onclick="laadTaken()">Opnieuw proberen</button></div>`;
   }
 }
 
-function setStatus(tid,naam,status){ /* niet meer gebruikt — statussen komen uit Classroom */ }
-function bulkStatus(tid,van,naar){ /* niet meer gebruikt */ }
-function verwijderTaak(id){ /* niet meer gebruikt */ }
-
-// TAAK MODAL
-function openNieuweTaakModal(){
-  document.getElementById('taak-naam').value=''; document.getElementById('taak-deadline').value='';
-  vulDD('taak-groep'); taakGroepWisselde(); document.getElementById('modal-taak').classList.add('open');
-}
-function taakGroepWisselde(voorGeselecteerd){
-  const gid=document.getElementById('taak-groep').value;
-  const groep=db.groepen.find(g=>g.id==gid);
-  const cont=document.getElementById('taak-lessen-lijst');
-  if(groep?.type==='boekhouden'){cont.innerHTML='<div class="info-bar" style="margin:0;font-size:0.85rem;">Bij Boekhouden krijgt iedereen de taak — lessen hoef je niet te selecteren.</div>';return;}
-  const lessen=getLessen(gid);
-  if(lessen.length===0){cont.innerHTML='<div style="color:#bbb;font-size:0.85rem;padding:0.5rem;">Nog geen lessen geregistreerd voor deze groep.</div>';return;}
-  cont.innerHTML=lessen.map(l=>`<label style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem;cursor:pointer;font-size:0.85rem;">
-    <input type="checkbox" value="${l.key}" ${l.key===voorGeselecteerd?'checked':''}><span>${l.datum} — ${l.naam}</span>
-    <span class="badge blue" style="margin-left:auto;">${l.aanwezigen} aanwezig</span></label>`).join('');
-}
-function getLessen(gid){
-  return Object.keys(db.aanwezigheden).filter(k=>k.startsWith(gid+'|')).map(key=>{
-    const d=key.split('|'); const aanwezigen=Object.values(db.aanwezigheden[key]).filter(v=>v.status==='aanwezig'||v.status==='telaat').length;
-    return{key,datum:d[1],naam:d[2],aanwezigen};
-  }).sort((a,b)=>b.datum.localeCompare(a.datum));
-}
-function slaaTaakOp(){
-  const naam=document.getElementById('taak-naam').value.trim(); if(!naam){alert('Geef een naam.');return;}
-  const deadline=document.getElementById('taak-deadline').value;
-  const gid=document.getElementById('taak-groep').value;
-  const lessen=Array.from(document.querySelectorAll('#taak-lessen-lijst input:checked')).map(cb=>cb.value);
-  const taak={id:Date.now(),naam,deadline,gid,lessen,statussen:{},toegewezen:[]};
-  herbereken(taak); db.taken.push(taak); save();
-  sluitModal('modal-taak'); vulDD('taken-groep',gid); laadTaken();
-}
-function herbereken(taak){
-  const groep=db.groepen.find(g=>g.id==taak.gid); if(!groep)return;
-  if(groep.type==='boekhouden'||!taak.lessen||taak.lessen.length===0){taak.toegewezen=[...groep.leerlingen];return;}
-  const aanw=new Set();
-  taak.lessen.forEach(k=>{ Object.entries(db.aanwezigheden[k]||{}).forEach(([n,v])=>{ if(v.status==='aanwezig'||v.status==='telaat')aanw.add(n); }); });
-  taak.toegewezen=groep.leerlingen.filter(n=>aanw.has(n));
-}
+// manuele taak functies verwijderd
 
 // OVERZICHT
 function laadOverzicht(){
@@ -752,6 +569,19 @@ function laadOverzicht(){
 }
 
 // DEADLINE CHECKER
+
+function slaaTaakOp() {
+  const naam=document.getElementById('na-taak-naam').value.trim();
+  if(!naam){sluit('modal-na-opslaan');return;}
+  const deadline=document.getElementById('na-taak-deadline').value;
+  const ctx=window._lesCtx; if(!ctx)return;
+  const groep=db.groepen.find(g=>g.id==ctx.gid);
+  let toegewezen=[];
+  if(groep?.type==='boekhouden'){toegewezen=groep?.leerlingen||[];}
+  else{const aanw=db.aanwezigheden[ctx.key]||{};toegewezen=(groep?.leerlingen||[]).filter(n=>['aanwezig','telaat'].includes(aanw[n]?.status));}
+  db.taken.push({id:Date.now(),naam,deadline,gid:ctx.gid,les:ctx.key,type:groep?.type||'andere',toegewezen,statussen:{}});
+  save(); sluit('modal-na-opslaan');
+}
 function checkDeadlines(){
   const vd=new Date(); vd.setHours(0,0,0,0); let n=0;
   db.taken.forEach(t=>{
@@ -850,7 +680,7 @@ function kopieerMailTekst(){
 function stuurGeselecteerdeMails(){
   const checked=Array.from(document.querySelectorAll('#deadline-inhoud input[type=checkbox]:checked'));
   if(!checked.length){alert('Selecteer minstens één leerling.');return;}
-  sluitModal('modal-deadlines');
+  sluit('modal-deadlines');
   let i=0;
   function volgende(){
     if(i>=checked.length)return;
@@ -862,7 +692,7 @@ function stuurGeselecteerdeMails(){
       const btn=document.createElement('button');
       btn.id='btn-volgende'; btn.className='btn sm outline';
       btn.textContent=`Volgende (${i}/${checked.length})`;
-      btn.onclick=()=>{sluitModal('modal-mail');setTimeout(volgende,150);};
+      btn.onclick=()=>{sluit('modal-mail');setTimeout(volgende,150);};
       footer.insertBefore(btn,footer.firstChild);
     }
   }
@@ -894,14 +724,14 @@ function slaGroepOp(){
   const eid=document.getElementById('groep-edit-id').value;
   if(eid)Object.assign(db.groepen.find(g=>g.id==eid),{naam,type,leerlingen,emails,coaches});
   else db.groepen.push({id:Date.now(),naam,type,leerlingen,emails,coaches});
-  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-groep');
+  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-groep');
 }
 function verwijderGroep(id){
   if(!confirm('Groep verwijderen? Alle data gaat verloren.'))return;
   db.groepen=db.groepen.filter(g=>g.id!=id);
   db.aanwezigheden=Object.fromEntries(Object.entries(db.aanwezigheden).filter(([k])=>!k.startsWith(id+'|')));
   db.taken=db.taken.filter(t=>t.gid!=id);
-  save(); vulAlleDD(); laadInstellingen();
+  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen();
 }
 
 // INSTELLINGEN
@@ -933,107 +763,53 @@ function slaMailOp(){
   save(); alert('✓ Mail-instellingen opgeslagen!');
 }
 
-// GOOGLE CLASSROOM
-const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
-const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
+// GOOGLE AUTH
+const GKEY='732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
+const GSCOPE='https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
+let googleToken=null;
 
-let googleToken = null;
-// _tokenKlaarResolvers: lijst van callbacks die wachten op een geldig token
-let _tokenKlaarResolvers = [];
-
-// Geef token door aan alle wachtenden
-function _tokenBeschikbaar(token) {
-  googleToken = token;
-  const resolvers = _tokenKlaarResolvers.splice(0);
-  resolvers.forEach(r => r(token));
+function laadGScript(cb){
+  if(window.google?.accounts){cb();return;}
+  const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);
 }
 
-// Wacht tot een geldig token beschikbaar is (max 15s timeout)
-function wachtOpToken() {
-  if (googleToken) return Promise.resolve(googleToken);
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      const idx = _tokenKlaarResolvers.indexOf(resolve);
-      if (idx > -1) _tokenKlaarResolvers.splice(idx, 1);
-      reject(new Error('timeout'));
-    }, 15000);
-    _tokenKlaarResolvers.push((token) => { clearTimeout(timeout); resolve(token); });
+function koppelGoogle(){
+  laadGScript(()=>{
+    google.accounts.oauth2.initTokenClient({client_id:GKEY,scope:GSCOPE,callback:(r)=>{
+      if(r.error){alert('Aanmelden mislukt: '+r.error);return;}
+      googleToken=r.access_token;
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+googleToken}})
+        .then(x=>x.json()).then(info=>{
+          localStorage.setItem('lkr_google','1');
+          localStorage.setItem('lkr_google_naam',info.name||'');
+          zetVerbUI(true);
+          // Als taken-tab actief is, herlaad
+          if(document.getElementById('tab-taken').classList.contains('active'))laadTaken();
+        });
+    }}).requestAccessToken();
   });
 }
 
-function laadGoogleScript(callback) {
-  if (window.google?.accounts) { callback(); return; }
-  const script = document.createElement('script');
-  script.src = 'https://accounts.google.com/gsi/client';
-  script.onload = callback;
-  document.head.appendChild(script);
+function zetVerbUI(v){
+  document.getElementById('google-status-blok').style.display=v?'none':'block';
+  document.getElementById('google-verbonden-blok').style.display=v?'block':'none';
+  if(v)document.getElementById('google-gebruiker').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
 }
 
-function koppelGoogle() {
-  laadGoogleScript(startGoogleAuth);
+function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
+
+async function gFetch(url){
+  const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
+  if(!r.ok)throw new Error(r.status+' '+r.statusText);
+  return r.json();
 }
 
-function startGoogleAuth() {
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: GOOGLE_SCOPES,
-    callback: (resp) => {
-      if (resp.error) { alert('Aanmelden mislukt: ' + resp.error); return; }
-      localStorage.setItem('lkr_google_verbonden', '1');
-      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: 'Bearer ' + resp.access_token }
-      }).then(r=>r.json()).then(info => {
-        localStorage.setItem('lkr_google_naam', info.name || 'Google gebruiker');
-        zetVerbondenUI(true);
-        _tokenBeschikbaar(resp.access_token);
-      });
-    }
-  });
-  client.requestAccessToken();
-}
-
-function zetVerbondenUI(verbonden) {
-  document.getElementById('google-status-blok').style.display = verbonden ? 'none' : 'block';
-  document.getElementById('google-verbonden-blok').style.display = verbonden ? 'block' : 'none';
-  if (verbonden) {
-    const naam = localStorage.getItem('lkr_google_naam') || 'Google gebruiker';
-    document.getElementById('google-gebruiker').textContent = '✓ Verbonden als ' + naam;
-  }
-}
-
-function ontkoppelGoogle() {
-  googleToken = null;
-  localStorage.removeItem('lkr_google_verbonden');
-  localStorage.removeItem('lkr_google_naam');
-  zetVerbondenUI(false);
-}
-
-// Bij opstarten: toon verbonden UI als eerder aangemeld
-function initGoogle() {
-  if (localStorage.getItem('lkr_google_verbonden') === '1') {
-    zetVerbondenUI(true);
-    // Token wordt aangemaakt zodra gebruiker eerste API-call doet (via popup indien nodig)
-  }
+function initGoogle(){
+  if(localStorage.getItem('lkr_google')==='1')zetVerbUI(true);
 }
 
 async function importeerClassroom() {
-  if (!googleToken) {
-    // Token nog niet beschikbaar — haal op via popup
-    try {
-      await new Promise((resolve, reject) => {
-        laadGoogleScript(() => {
-          const client = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
-            callback: (resp) => {
-              if (resp.error) reject(new Error(resp.error));
-              else { _tokenBeschikbaar(resp.access_token); resolve(); }
-            }
-          });
-          client.requestAccessToken();
-        });
-      });
-    } catch(e) { alert('Aanmelden mislukt: ' + e.message); return; }
-  }
+  if (!googleToken) { alert('Meld eerst aan met Google.'); koppelGoogle(); return; }
   const btn = document.querySelector('#google-verbonden-blok .btn.outline');
   btn.textContent = '⏳ Laden…'; btn.disabled = true;
 
@@ -1084,7 +860,7 @@ function toonImportModal(klassen) {
       <p style="font-size:0.85rem;color:#666;margin-bottom:1rem;">Kies welke klassen je wil importeren. Bestaande groepen met dezelfde naam worden bijgewerkt.</p>
       <div id="import-klassen-lijst"></div>
       <div class="modal-footer">
-        <button class="btn outline sm" onclick="sluitModal('modal-import')">Annuleren</button>
+        <button class="btn outline sm" onclick="sluit('modal-import')">Annuleren</button>
         <button class="btn sm" onclick="voerImportUit()">✅ Importeren</button>
       </div>
     </div>`;
@@ -1156,7 +932,7 @@ function voerImportUit() {
     }
   });
 
-  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-import');
+  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-import');
   alert(`✅ Klaar!\n${nieuw} nieuwe groep(en) aangemaakt\n${bijgewerkt} groep(en) bijgewerkt\n\nVergeet niet de coaches in te vullen via de ✏ knop bij elke groep.`);
 }
 
@@ -1168,12 +944,14 @@ function exporteerData(){
 function resetData(){if(!confirm('Alles wissen?'))return;localStorage.removeItem(STORAGE_KEY);location.reload();}
 
 // MODALS
-function sluitModal(id){document.getElementById(id).classList.remove('open');}
+function sluit(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 // INIT
 document.getElementById('aanw-datum').value=new Date().toISOString().split('T')[0];
-vulAlleDD(); checkDeadlines(); setInterval(checkDeadlines,60000);
+['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id));
+vulTakenKlassen();
+checkDeadlines(); setInterval(checkDeadlines,60000);
 initGoogle();
 if(db.groepen.length===0){
   setTimeout(()=>{if(confirm('Welkom!\n\nWil je nu je eerste groep aanmaken?')){showTab('instellingen',document.querySelector('[data-tab=instellingen]'));setTimeout(openGroepModal,200);}},400);
@@ -1218,7 +996,7 @@ function voerSamenvoegenUit() {
     emails: [],
     coaches: leerlingen.map(n => leerlingenMap.get(n).coach)
   });
-  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-samenvoegen');
+  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-samenvoegen');
   alert(`✅ Groep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.\n\nDe originele klassen staan er nog bij — je kan ze verwijderen als je ze niet meer nodig hebt.`);
 }
 
@@ -1287,7 +1065,7 @@ function voerSubgroepUit() {
   const coaches = gekozen.map(cb => cb.dataset.coach || '');
 
   db.groepen.push({ id: Date.now(), naam, type, leerlingen, emails: [], coaches });
-  save(); vulAlleDD(); laadInstellingen(); sluitModal('modal-subgroep');
+  save(); ['aanw-groep','overzicht-groep'].forEach(id=>vulDD(id)); laadInstellingen(); sluit('modal-subgroep');
   alert(`✅ Subgroep "${naam}" aangemaakt met ${leerlingen.length} leerlingen.`);
 }
 </script>
@@ -1311,7 +1089,7 @@ function voerSubgroepUit() {
       <div id="samen-klassen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:280px;overflow-y:auto;"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-samenvoegen')">Annuleren</button>
+      <button class="btn outline sm" onclick="sluit('modal-samenvoegen')">Annuleren</button>
       <button class="btn sm" onclick="voerSamenvoegenUit()">Samenvoegen</button>
     </div>
   </div>
@@ -1340,7 +1118,7 @@ function voerSubgroepUit() {
       <div id="sub-leerlingen-lijst" style="border:1px solid #e2e6ed;border-radius:7px;padding:0.5rem;max-height:300px;overflow-y:auto;"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn outline sm" onclick="sluitModal('modal-subgroep')">Annuleren</button>
+      <button class="btn outline sm" onclick="sluit('modal-subgroep')">Annuleren</button>
       <button class="btn sm" onclick="voerSubgroepUit()">Subgroep aanmaken</button>
     </div>
   </div>
