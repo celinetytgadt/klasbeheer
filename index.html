@@ -474,14 +474,32 @@ async function laadTaken() {
     return;
   }
 
-  // Zorg voor geldig token — vernieuw stil indien verlopen
-  if (!tokenGeldig()) {
-    syncBar.style.display = 'block';
-    syncBar.textContent = '⏳ Verbinding vernieuwen…';
-    const ok = await new Promise(resolve => vernieuwTokenStil(resolve));
-    if (!ok) {
+  // Zorg voor geldig token — vraag aan indien nodig
+  if (!googleToken) {
+    if (localStorage.getItem('lkr_google_verbonden') !== '1') {
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom koppeling en meld aan.</div>';
       syncBar.style.display = 'none';
-      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Niet verbonden met Google. Ga naar Instellingen → Google Classroom koppeling.</div>';
+      return;
+    }
+    // Verbonden maar token nog niet beschikbaar — vraag token op via popup
+    syncBar.style.display = 'block';
+    syncBar.textContent = '⏳ Verbinding maken met Google…';
+    try {
+      await new Promise((resolve, reject) => {
+        laadGoogleScript(() => {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
+            callback: (resp) => {
+              if (resp.error) reject(new Error(resp.error));
+              else { _tokenBeschikbaar(resp.access_token); resolve(); }
+            }
+          });
+          client.requestAccessToken();
+        });
+      });
+    } catch(e) {
+      syncBar.style.display = 'none';
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#e24b4a;">⚠ Aanmelden mislukt. Probeer opnieuw via Instellingen.</div>';
       return;
     }
   }
@@ -866,12 +884,28 @@ function slaMailOp(){
 const GOOGLE_CLIENT_ID = '732025887189-rml3flr631f1gmhhlkb63nbgqekqotsi.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.rosters.readonly https://www.googleapis.com/auth/classroom.coursework.students.readonly https://www.googleapis.com/auth/classroom.student-submissions.students.readonly';
 
-// Token wordt in memory gehouden + verloopdatum bijgehouden
 let googleToken = null;
-let googleTokenExpiry = null; // timestamp in ms
+// _tokenKlaarResolvers: lijst van callbacks die wachten op een geldig token
+let _tokenKlaarResolvers = [];
 
-function tokenGeldig() {
-  return googleToken && googleTokenExpiry && Date.now() < googleTokenExpiry;
+// Geef token door aan alle wachtenden
+function _tokenBeschikbaar(token) {
+  googleToken = token;
+  const resolvers = _tokenKlaarResolvers.splice(0);
+  resolvers.forEach(r => r(token));
+}
+
+// Wacht tot een geldig token beschikbaar is (max 15s timeout)
+function wachtOpToken() {
+  if (googleToken) return Promise.resolve(googleToken);
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      const idx = _tokenKlaarResolvers.indexOf(resolve);
+      if (idx > -1) _tokenKlaarResolvers.splice(idx, 1);
+      reject(new Error('timeout'));
+    }, 15000);
+    _tokenKlaarResolvers.push((token) => { clearTimeout(timeout); resolve(token); });
+  });
 }
 
 function laadGoogleScript(callback) {
@@ -882,48 +916,27 @@ function laadGoogleScript(callback) {
   document.head.appendChild(script);
 }
 
-// Stil token vernieuwen zonder popup — werkt als gebruiker al eerder toestemming gaf
-function vernieuwTokenStil(callback) {
-  laadGoogleScript(() => {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: GOOGLE_SCOPES,
-      prompt: '', // geen popup als toestemming al gegeven
-      callback: (resp) => {
-        if (resp.error) { if (callback) callback(false); return; }
-        googleToken = resp.access_token;
-        googleTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
-        zetVerbondenUI(true);
-        if (callback) callback(true);
-      }
-    });
-    client.requestAccessToken({ prompt: '' });
-  });
-}
-
 function koppelGoogle() {
-  laadGoogleScript(() => startGoogleAuth(true));
+  laadGoogleScript(startGoogleAuth);
 }
 
-function startGoogleAuth(metPopup) {
+function startGoogleAuth() {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: GOOGLE_SCOPES,
     callback: (resp) => {
       if (resp.error) { alert('Aanmelden mislukt: ' + resp.error); return; }
-      googleToken = resp.access_token;
-      googleTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
-      // Sla verbonden-status op zodat we bij herstart weten dat we stilletjes kunnen vernieuwen
       localStorage.setItem('lkr_google_verbonden', '1');
       fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: 'Bearer ' + googleToken }
+        headers: { Authorization: 'Bearer ' + resp.access_token }
       }).then(r=>r.json()).then(info => {
         localStorage.setItem('lkr_google_naam', info.name || 'Google gebruiker');
         zetVerbondenUI(true);
+        _tokenBeschikbaar(resp.access_token);
       });
     }
   });
-  client.requestAccessToken(metPopup ? {} : { prompt: '' });
+  client.requestAccessToken();
 }
 
 function zetVerbondenUI(verbonden) {
@@ -935,38 +948,38 @@ function zetVerbondenUI(verbonden) {
   }
 }
 
-// Zorg voor geldig token voor een API-call — vernieuwt stil indien nodig
-async function metGeldigToken(fn) {
-  if (tokenGeldig()) return fn(googleToken);
-  return new Promise((resolve) => {
-    vernieuwTokenStil((ok) => {
-      if (ok) resolve(fn(googleToken));
-      else resolve(null); // niet gelukt — gebruiker moet opnieuw klikken
-    });
-  });
-}
-
 function ontkoppelGoogle() {
-  googleToken = null; googleTokenExpiry = null;
+  googleToken = null;
   localStorage.removeItem('lkr_google_verbonden');
   localStorage.removeItem('lkr_google_naam');
   zetVerbondenUI(false);
 }
 
-// Bij opstarten: als gebruiker eerder verbonden was, token stilletjes vernieuwen
+// Bij opstarten: toon verbonden UI als eerder aangemeld
 function initGoogle() {
   if (localStorage.getItem('lkr_google_verbonden') === '1') {
-    zetVerbondenUI(true); // toon UI alvast als verbonden
-    laadGoogleScript(() => vernieuwTokenStil((ok) => {
-      if (!ok) { zetVerbondenUI(false); localStorage.removeItem('lkr_google_verbonden'); }
-    }));
+    zetVerbondenUI(true);
+    // Token wordt aangemaakt zodra gebruiker eerste API-call doet (via popup indien nodig)
   }
 }
 
 async function importeerClassroom() {
-  if (!tokenGeldig()) {
-    const ok = await new Promise(resolve => vernieuwTokenStil(resolve));
-    if (!ok) { alert('Niet verbonden met Google. Klik eerst op Aanmelden.'); return; }
+  if (!googleToken) {
+    // Token nog niet beschikbaar — haal op via popup
+    try {
+      await new Promise((resolve, reject) => {
+        laadGoogleScript(() => {
+          const client = google.accounts.oauth2.initTokenClient({
+            client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
+            callback: (resp) => {
+              if (resp.error) reject(new Error(resp.error));
+              else { _tokenBeschikbaar(resp.access_token); resolve(); }
+            }
+          });
+          client.requestAccessToken();
+        });
+      });
+    } catch(e) { alert('Aanmelden mislukt: ' + e.message); return; }
   }
   const btn = document.querySelector('#google-verbonden-blok .btn.outline');
   btn.textContent = '⏳ Laden…'; btn.disabled = true;
