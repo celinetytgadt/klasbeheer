@@ -349,7 +349,7 @@ function showTab(naam, btn) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + naam).classList.add('active');
   if (btn) btn.classList.add('active');
-  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: () => { vulDD('taken-groep'); takenGroepWisselde(); laadTaken(); }, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
+  ({ aanwezigheid: () => vulDD('aanw-groep'), taken: () => { vulDD('taken-groep'); takenGroepWisselde(); }, overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); }, instellingen: laadInstellingen })[naam]?.();
 }
 
 // DROPDOWNS
@@ -451,14 +451,63 @@ function takenGroepWisselde() {
   const gid = document.getElementById('taken-groep').value;
   const groep = db.groepen.find(g => g.id == gid);
   const klasSelect = document.getElementById('taken-classroom-klas');
-  if (!groep || !db.classroomKlassen || db.classroomKlassen.length === 0) {
-    klasSelect.innerHTML = '<option value="">— niet verbonden met Classroom —</option>';
-    document.getElementById('taken-refresh-btn').style.display = 'none';
+  const refreshBtn = document.getElementById('taken-refresh-btn');
+
+  // Classroom-klassen komen uit db.classroomKlassen (opgeslagen bij import)
+  const klassen = db.classroomKlassen || [];
+
+  if (!groep) {
+    klasSelect.innerHTML = '<option value="">— kies eerst een portaalgroep —</option>';
+    refreshBtn.style.display = 'none';
     return;
   }
+
+  if (klassen.length === 0) {
+    // Geen klassen opgeslagen — toon verbinden knop
+    klasSelect.innerHTML = '<option value="">— klik op Verbinden —</option>';
+    refreshBtn.style.display = 'inline-block';
+    refreshBtn.textContent = '🔑 Verbinden';
+    refreshBtn.onclick = () => verbindEnLaadKlassen();
+    return;
+  }
+
   klasSelect.innerHTML = '<option value="">— kies Classroom-klas —</option>' +
-    db.classroomKlassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
-  document.getElementById('taken-refresh-btn').style.display = 'inline-block';
+    klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+  refreshBtn.style.display = 'inline-block';
+  refreshBtn.textContent = '🔄 Vernieuwen';
+  refreshBtn.onclick = () => laadTaken();
+}
+
+async function verbindEnLaadKlassen() {
+  const btn = document.getElementById('taken-refresh-btn');
+  btn.textContent = '⏳ Bezig…'; btn.disabled = true;
+  try {
+    await new Promise((resolve, reject) => {
+      laadGoogleScript(() => {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID, scope: GOOGLE_SCOPES,
+          callback: (resp) => {
+            if (resp.error) reject(new Error(resp.error));
+            else { _tokenBeschikbaar(resp.access_token); resolve(); }
+          }
+        });
+        client.requestAccessToken();
+      });
+    });
+    // Haal klassen op en sla op
+    const resp = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&pageSize=30',
+      { headers: { Authorization: 'Bearer ' + googleToken } });
+    const data = await resp.json();
+    db.classroomKlassen = (data.courses || []).map(c => ({ id: c.id, naam: c.name }));
+    save();
+    localStorage.setItem('lkr_google_verbonden', '1');
+    zetVerbondenUI(true);
+    takenGroepWisselde(); // herlaad dropdown met klassen
+  } catch(e) {
+    alert('Verbinden mislukt: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 async function laadTaken() {
@@ -469,7 +518,11 @@ async function laadTaken() {
   const syncBar = document.getElementById('taken-sync-bar');
 
   if (!groep || !klasId) {
-    cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div>';
+    if (groep && !klasId) {
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Kies een Classroom-klas uit de dropdown hierboven</div>';
+    } else {
+      cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb;">Selecteer een portaalgroep en een Classroom-klas</div>';
+    }
     syncBar.style.display = 'none';
     return;
   }
