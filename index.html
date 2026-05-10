@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.4</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.5</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -499,12 +499,8 @@ async function laadTaken() {
   if (!klasId) { cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas hierboven</div>'; return; }
 
   if (!googleToken) {
-    if (localStorage.getItem('lkr_google') === '1') {
-      sync.style.display = 'block'; sync.textContent = '⏳ Verbinding herstellen…';
-      await new Promise(r => { window._naToken = () => { r(); laadTaken(); }; koppelGoogle(); });
-      return;
-    }
-    cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden met Google.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    sync.style.display = 'none';
     return;
   }
 
@@ -895,16 +891,12 @@ function zetVerbUI(v) {
 }
 function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
 
-async function gFetch(url, retry=true) {
+async function gFetch(url) {
   const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
-  if (r.status===401 && retry) {
-    // Token verlopen — eenmalig opnieuw aanmelden
+  if (r.status===401) {
     googleToken=null;
-    await new Promise((resolve,reject) => {
-      window._naToken = resolve;
-      koppelGoogle();
-    });
-    return gFetch(url, false); // retry=false voorkomt oneindige loop
+    zetVerbUI(false);
+    throw new Error('Sessie verlopen — meld opnieuw aan via de knop hieronder.');
   }
   if (!r.ok) throw new Error(r.status+' '+r.statusText);
   return r.json();
