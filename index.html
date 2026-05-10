@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.6</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.7</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -570,8 +570,15 @@ async function laadTaken() {
       return 'niet_ingediend';
     };
 
+    // Enkel leerlingen tonen die de taak effectief gekregen hebben
+    // = leerlingen waarvoor een submission bestaat (ook al is die NEW/CREATED)
+    // Leerlingen zonder submission = taak niet aan hen toegewezen
+    const heeftTaak = (taakId, userId) => subMap[taakId]?.[userId] !== undefined;
+
     // Enkel lopende taken
-    const lopend = mijnTaken.filter(taak => students.some(s => vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond'));
+    const lopend = mijnTaken.filter(taak =>
+      students.some(s => heeftTaak(taak.id, s.userId) && vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond')
+    );
 
     sync.style.display = 'none';
     status.textContent = `${lopend.length} lopend · ${mijnTaken.length - lopend.length} afgerond verborgen`;
@@ -587,11 +594,13 @@ async function laadTaken() {
       const dl = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
       const topicNaam = taak.topicId ? topicsMap[taak.topicId] : null;
       const gr = { niet_ingediend:[], ingediend:[], remediering:[], afgerond:[] };
-      students.forEach(s => {
+      // Enkel leerlingen met een submission (= taak effectief toegewezen)
+      const toegewezenStudents = students.filter(s => heeftTaak(taak.id, s.userId));
+      toegewezenStudents.forEach(s => {
         const naam = uidNaam[s.userId]||'?';
         (gr[vertaal(subMap[taak.id]?.[s.userId])]||gr.niet_ingediend).push(naam);
       });
-      const tot=students.length, klaar=gr.afgerond.length;
+      const tot=toegewezenStudents.length, klaar=gr.afgerond.length;
       const pct=tot>0?Math.round(klaar/tot*100):0;
       const url=`https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
       return `<div class="taak-card">
