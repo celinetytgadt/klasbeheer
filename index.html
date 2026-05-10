@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.7</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.8</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -602,7 +602,9 @@ async function laadTaken() {
       });
       const tot=toegewezenStudents.length, klaar=gr.afgerond.length;
       const pct=tot>0?Math.round(klaar/tot*100):0;
-      const url=`https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
+      // Classroom gebruikt base64-encoded IDs in de URL
+      const b64 = s => btoa(s);
+      const url=`https://classroom.google.com/c/${b64(klasId)}/a/${b64(taak.id)}/details`;
       return `<div class="taak-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
           <div><div style="font-weight:600;font-size:.95rem">${taak.title}</div>
