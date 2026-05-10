@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.5</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.6</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -507,10 +507,14 @@ async function laadTaken() {
   sync.style.display = 'block'; sync.textContent = '⏳ Taken ophalen…'; cont.innerHTML = ''; status.textContent = '';
 
   try {
-    // Eigen userId ophalen (éénmalig)
+    // Eigen userId — opgeslagen bij aanmelden of ophalen via API
     if (!window._mijnUserId) {
-      const me = await gFetch('https://www.googleapis.com/oauth2/v3/userinfo');
-      window._mijnUserId = me.sub;
+      window._mijnUserId = localStorage.getItem('lkr_google_uid') || null;
+    }
+    if (!window._mijnUserId) {
+      const me = await gFetch('https://classroom.googleapis.com/v1/userProfiles/me');
+      window._mijnUserId = me.id;
+      localStorage.setItem('lkr_google_uid', me.id);
     }
 
     // Topics ophalen
@@ -872,13 +876,23 @@ function koppelGoogle() {
       googleToken = r.access_token;
       localStorage.setItem('lkr_google','1');
       // Naam ophalen via Classroom eigen profiel (geen aparte scope nodig)
-      fetch('https://classroom.googleapis.com/v1/courses?pageSize=1',{headers:{Authorization:'Bearer '+googleToken}})
-        .then(x => {
-          if (!x.ok) { alert('Aanmelden mislukt — controleer je Google account ('+x.status+')'); googleToken=null; _googleBezig=false; return; }
+      // Test of token werkt met een kleine Classroom call
+      fetch('https://classroom.googleapis.com/v1/userProfiles/me',{headers:{Authorization:'Bearer '+googleToken}})
+        .then(x => x.json()).then(info => {
+          if (info.error) {
+            alert('Aanmelden mislukt ('+info.error.code+'): '+info.error.message);
+            googleToken=null; _googleBezig=false; return;
+          }
+          // Sla userId op voor creator-filter
+          window._mijnUserId = info.id;
+          localStorage.setItem('lkr_google_uid', info.id);
+          localStorage.setItem('lkr_google_naam', info.name?.fullName||'');
           zetVerbUI(true);
-          window._mijnUserId = null;
           if (document.getElementById('tab-taken').classList.contains('active')) laadTaken();
           if (window._naToken) { window._naToken(); window._naToken=null; }
+        }).catch(e => {
+          alert('Verbindingsfout: '+e.message);
+          googleToken=null; _googleBezig=false;
         });
     }}).requestAccessToken();
   });
@@ -887,7 +901,7 @@ function koppelGoogle() {
 function zetVerbUI(v) {
   document.getElementById('google-uit').style.display=v?'none':'block';
   document.getElementById('google-aan').style.display=v?'block':'none';
-  if (v) document.getElementById('google-naam').textContent='✓ Verbonden met Google';
+  if (v) document.getElementById('google-naam').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
 }
 function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
 
@@ -896,7 +910,7 @@ async function gFetch(url) {
   if (r.status===401) {
     googleToken=null;
     zetVerbUI(false);
-    throw new Error('Sessie verlopen — meld opnieuw aan via de knop hieronder.');
+    throw new Error('401 — Niet geautoriseerd. Klik op "Aanmelden met Google" om opnieuw te verbinden.');
   }
   if (!r.ok) throw new Error(r.status+' '+r.statusText);
   return r.json();
