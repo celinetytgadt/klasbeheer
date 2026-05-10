@@ -1,4 +1,4 @@
-v<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.3</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.4</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -875,9 +875,10 @@ function koppelGoogle() {
       }
       googleToken = r.access_token;
       localStorage.setItem('lkr_google','1');
-      fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+googleToken}})
-        .then(x=>x.json()).then(info => {
-          localStorage.setItem('lkr_google_naam', info.name||'');
+      // Naam ophalen via Classroom eigen profiel (geen aparte scope nodig)
+      fetch('https://classroom.googleapis.com/v1/courses?pageSize=1',{headers:{Authorization:'Bearer '+googleToken}})
+        .then(x => {
+          if (!x.ok) { alert('Aanmelden mislukt — controleer je Google account ('+x.status+')'); googleToken=null; _googleBezig=false; return; }
           zetVerbUI(true);
           window._mijnUserId = null;
           if (document.getElementById('tab-taken').classList.contains('active')) laadTaken();
@@ -890,7 +891,7 @@ function koppelGoogle() {
 function zetVerbUI(v) {
   document.getElementById('google-uit').style.display=v?'none':'block';
   document.getElementById('google-aan').style.display=v?'block':'none';
-  if (v) document.getElementById('google-naam').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
+  if (v) document.getElementById('google-naam').textContent='✓ Verbonden met Google';
 }
 function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
 
