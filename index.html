@@ -140,9 +140,9 @@ tr:last-child td{border-bottom:none}
   <div class="card">
     <div class="row" style="margin-bottom:0">
       <label class="lbl">Modus</label>
-      <select id="overzicht-modus" onchange="laadOverzicht()">
-        <option value="aanwezigheid">📋 Aanwezigheid</option>
+      <select id="overzicht-modus" onchange="wisselOverzichtModus()">
         <option value="taken">📦 Taken</option>
+        <option value="aanwezigheid">📋 Aanwezigheid</option>
       </select>
       <div id="overzicht-groep-wrap">
         <label class="lbl">Groep</label>
@@ -396,7 +396,7 @@ function showTab(naam, btn) {
   btn?.classList.add('active');
   ({ aanwezigheid: () => vulDD('aanw-groep'),
      taken: vulTakenKlassen,
-     overzicht: () => { vulDD('overzicht-groep'); vulOverzichtKlassen(); laadOverzicht(); },
+     overzicht: () => { vulDD('overzicht-groep'); wisselOverzichtModus(); },
      instellingen: laadInstellingen })[naam]?.();
 }
 
