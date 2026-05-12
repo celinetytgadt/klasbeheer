@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.1</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.2</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -668,6 +668,8 @@ function wisselOverzichtModus() {
   document.getElementById('overzicht-groep-wrap').style.display = modus==='aanwezigheid' ? 'flex' : 'none';
   document.getElementById('overzicht-klas-wrap').style.display = modus==='taken' ? 'flex' : 'none';
   document.getElementById('overzicht-container').innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een groep of klas</div>';
+  document.getElementById('overzicht-sync').style.display = 'none';
+  if (modus==='taken') vulOverzichtKlassen();
 }
 
 function laadOverzicht() {
