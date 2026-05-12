@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v4.9</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.1</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -137,10 +137,27 @@ tr:last-child td{border-bottom:none}
 
 <!-- OVERZICHT -->
 <div id="tab-overzicht" class="section">
-  <div class="row">
-    <label class="lbl">Groep</label><select id="overzicht-groep" onchange="laadOverzicht()"></select>
+  <div class="card">
+    <div class="row" style="margin-bottom:0">
+      <label class="lbl">Modus</label>
+      <select id="overzicht-modus" onchange="laadOverzicht()">
+        <option value="aanwezigheid">📋 Aanwezigheid</option>
+        <option value="taken">📦 Taken</option>
+      </select>
+      <div id="overzicht-groep-wrap">
+        <label class="lbl">Groep</label>
+        <select id="overzicht-groep" onchange="laadOverzicht()"></select>
+      </div>
+      <div id="overzicht-klas-wrap" style="display:none">
+        <label class="lbl">Classroom</label>
+        <select id="overzicht-klas" onchange="laadOverzicht()" style="min-width:220px">
+          <option value="">— kies een klas —</option>
+        </select>
+      </div>
+    </div>
   </div>
-  <div id="overzicht-container"><div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een groep</div></div>
+  <div id="overzicht-sync" class="info-bar" style="display:none">⏳ Taken ophalen…</div>
+  <div id="overzicht-container"><div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een modus</div></div>
 </div>
 
 <!-- INSTELLINGEN -->
@@ -363,7 +380,6 @@ function laadDb() {
     if (!d.classroomKlassen) d.classroomKlassen = [];
     if (!d.taken) d.taken = [];
     localStorage.setItem(KEY, JSON.stringify(d));
-    console.log('✓ Data gemigreerd naar v4');
     return d;
   }
   return { groepen:[], aanwezigheden:{}, taken:[], classroomKlassen:[], mail: {...MAIL_DEFAULT} };
@@ -380,7 +396,7 @@ function showTab(naam, btn) {
   btn?.classList.add('active');
   ({ aanwezigheid: () => vulDD('aanw-groep'),
      taken: vulTakenKlassen,
-     overzicht: () => { vulDD('overzicht-groep'); laadOverzicht(); },
+     overzicht: () => { vulDD('overzicht-groep'); vulOverzichtKlassen(); laadOverzicht(); },
      instellingen: laadInstellingen })[naam]?.();
 }
 
@@ -564,20 +580,22 @@ async function laadTaken() {
     alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
 
     const vertaal = sub => {
-      if (!sub || sub.state==='NEW' || sub.state==='CREATED') return 'niet_ingediend';
+      if (!sub) return null; // geen submission = taak niet toegewezen
+      if (sub.state==='EXCUSED') return 'afgerond'; // vrijgesteld = tellen als afgerond
+      if (sub.state==='NEW' || sub.state==='CREATED') return 'niet_ingediend';
       if (sub.state==='TURNED_IN') return 'ingediend';
       if (sub.state==='RETURNED') return sub.assignedGrade!=null ? 'afgerond' : 'remediering';
       return 'niet_ingediend';
     };
 
-    // Enkel leerlingen tonen die de taak effectief gekregen hebben
-    // = leerlingen waarvoor een submission bestaat (ook al is die NEW/CREATED)
-    // Leerlingen zonder submission = taak niet aan hen toegewezen
-    const heeftTaak = (taakId, userId) => subMap[taakId]?.[userId] !== undefined;
+    // Enkel leerlingen met een submission (= taak effectief toegewezen)
 
-    // Enkel lopende taken
+    // Enkel lopende taken (minstens 1 toegewezen leerling niet afgerond)
     const lopend = mijnTaken.filter(taak =>
-      students.some(s => heeftTaak(taak.id, s.userId) && vertaal(subMap[taak.id]?.[s.userId]) !== 'afgerond')
+      students.some(s => {
+        const st = vertaal(subMap[taak.id]?.[s.userId]);
+        return st !== null && st !== 'afgerond';
+      })
     );
 
     sync.style.display = 'none';
@@ -594,13 +612,15 @@ async function laadTaken() {
       const dl = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
       const topicNaam = taak.topicId ? topicsMap[taak.topicId] : null;
       const gr = { niet_ingediend:[], ingediend:[], remediering:[], afgerond:[] };
-      // Enkel leerlingen met een submission (= taak effectief toegewezen)
-      const toegewezenStudents = students.filter(s => heeftTaak(taak.id, s.userId));
-      toegewezenStudents.forEach(s => {
+      // Enkel leerlingen waarvoor een submission bestaat (= taak toegewezen)
+      students.forEach(s => {
+        const status = vertaal(subMap[taak.id]?.[s.userId]);
+        if (status === null) return; // niet toegewezen — overslaan
         const naam = uidNaam[s.userId]||'?';
-        (gr[vertaal(subMap[taak.id]?.[s.userId])]||gr.niet_ingediend).push(naam);
+        (gr[status]||gr.niet_ingediend).push(naam);
       });
-      const tot=toegewezenStudents.length, klaar=gr.afgerond.length;
+      const tot=(gr.niet_ingediend.length+gr.ingediend.length+gr.remediering.length+gr.afgerond.length);
+      const klaar=gr.afgerond.length;
       const pct=tot>0?Math.round(klaar/tot*100):0;
       // Classroom gebruikt base64-encoded IDs in de URL
       const b64 = s => btoa(s).replace(/=/g, '');
@@ -636,7 +656,27 @@ async function laadTaken() {
 }
 
 // ── OVERZICHT ─────────────────────────────────────────────────────────────────
+function vulOverzichtKlassen() {
+  const sel = document.getElementById('overzicht-klas');
+  const klassen = db.classroomKlassen || [];
+  sel.innerHTML = '<option value="">— kies een klas —</option>' +
+    klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+}
+
+function wisselOverzichtModus() {
+  const modus = document.getElementById('overzicht-modus').value;
+  document.getElementById('overzicht-groep-wrap').style.display = modus==='aanwezigheid' ? 'flex' : 'none';
+  document.getElementById('overzicht-klas-wrap').style.display = modus==='taken' ? 'flex' : 'none';
+  document.getElementById('overzicht-container').innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Selecteer een groep of klas</div>';
+}
+
 function laadOverzicht() {
+  const modus = document.getElementById('overzicht-modus').value;
+  if (modus==='aanwezigheid') laadOverzichtAanwezigheid();
+  else laadOverzichtTaken();
+}
+
+function laadOverzichtAanwezigheid() {
   const gid = document.getElementById('overzicht-groep').value;
   const groep = db.groepen.find(g => g.id == gid);
   const cont = document.getElementById('overzicht-container');
@@ -655,6 +695,97 @@ function laadOverzicht() {
     return `<tr><td style="font-weight:500;white-space:nowrap">${naam}</td>${cellen}<td style="text-align:center"><span class="badge ${pct>=80?'green':pct>=60?'amber':'red'}">${pct}%</span></td></tr>`;
   }).join('');
   cont.innerHTML = `<div class="card" style="overflow-x:auto"><table style="min-width:500px"><thead><tr><th>Leerling</th>${lessen.map(l=>`<th style="font-size:.75rem;white-space:nowrap">${l.datum}<br><span style="font-weight:400;color:#bbb">${l.naam.substring(0,12)}</span></th>`).join('')}<th>%</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+async function laadOverzichtTaken() {
+  const klasId = document.getElementById('overzicht-klas').value;
+  const cont = document.getElementById('overzicht-container');
+  const sync = document.getElementById('overzicht-sync');
+  if (!klasId) { cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:#bbb">Kies een Classroom-klas</div>'; return; }
+  if (!googleToken) {
+    cont.innerHTML = '<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Niet verbonden.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Aanmelden met Google</button></div>';
+    return;
+  }
+  sync.style.display='block'; sync.textContent='⏳ Taken ophalen…'; cont.innerHTML='';
+  try {
+    if (!window._mijnUserId) window._mijnUserId = localStorage.getItem('lkr_google_uid')||null;
+    if (!window._mijnUserId) {
+      const me = await gFetch('https://classroom.googleapis.com/v1/userProfiles/me');
+      window._mijnUserId = me.id;
+      localStorage.setItem('lkr_google_uid', me.id);
+    }
+    sync.textContent='⏳ Taken laden…';
+    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
+    const mijnTaken = (takenData.courseWork||[]).filter(t => t.creatorUserId===window._mijnUserId);
+    if (!mijnTaken.length) { sync.style.display='none'; cont.innerHTML='<div style="text-align:center;padding:2rem;color:#bbb">Geen taken gevonden.</div>'; return; }
+
+    const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`);
+    const students = rosterData.students||[];
+    const uidNaam = {};
+    students.forEach(s => uidNaam[s.userId]=s.profile.name.fullName);
+
+    sync.textContent='⏳ Statussen laden…';
+    const alleSubs = await Promise.all(mijnTaken.map(t =>
+      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=100`)
+        .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
+    ));
+    const subMap = {};
+    alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
+
+    const ovzVertaal = sub => {
+      if (!sub) return null;
+      if (sub.state==='EXCUSED') return {ico:'🔵', label:'Vrijgesteld'};
+      if (sub.state==='NEW'||sub.state==='CREATED') return {ico:'❌', label:'Niet ingediend'};
+      if (sub.state==='TURNED_IN') return {ico:'📥', label:'Ingediend'};
+      if (sub.state==='RETURNED') return sub.assignedGrade!=null ? {ico:'🏁', label:'Afgerond'} : {ico:'🔄', label:'Remediering'};
+      return {ico:'❌', label:'Niet ingediend'};
+    };
+
+    // Enkel leerlingen met minstens 1 taak
+    const llnMetTaak = students.filter(s => mijnTaken.some(t => subMap[t.id]?.[s.userId]!==undefined));
+    if (!llnMetTaak.length) { sync.style.display='none'; cont.innerHTML='<div style="text-align:center;padding:2rem;color:#bbb">Geen leerlingen met taken.</div>'; return; }
+
+    // Sorteer leerlingen op naam
+    llnMetTaak.sort((a,b) => (uidNaam[a.userId]||'').localeCompare(uidNaam[b.userId]||''));
+
+    const rows = llnMetTaak.map(s => {
+      const naam = uidNaam[s.userId]||'?';
+      const cellen = mijnTaken.map(t => {
+        const sub = subMap[t.id]?.[s.userId];
+        if (sub===undefined) return `<td style="text-align:center;color:#eee">—</td>`;
+        const v = ovzVertaal(sub);
+        return `<td style="text-align:center" title="${v.label}">${v.ico}</td>`;
+      }).join('');
+      // % afgerond van toegewezen taken
+      const toegewezen = mijnTaken.filter(t => subMap[t.id]?.[s.userId]!==undefined).length;
+      const afgerond = mijnTaken.filter(t => {
+        const sub = subMap[t.id]?.[s.userId];
+        return sub && (sub.state==='EXCUSED' || (sub.state==='RETURNED' && sub.assignedGrade!=null));
+      }).length;
+      const pct = toegewezen>0 ? Math.round(afgerond/toegewezen*100) : 0;
+      return `<tr><td style="font-weight:500;white-space:nowrap">${naam}</td>${cellen}<td style="text-align:center"><span class="badge ${pct>=80?'green':pct>=60?'amber':'red'}">${pct}%</span></td></tr>`;
+    }).join('');
+
+    const titelRijen = mijnTaken.map(t => {
+      const dl = t.dueDate ? `${t.dueDate.year}-${String(t.dueDate.month).padStart(2,'0')}-${String(t.dueDate.day).padStart(2,'0')}` : '';
+      return `<th style="font-size:.73rem;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis" title="${t.title}${dl?' ('+dl+')':''}">${t.title.substring(0,14)}${t.title.length>14?'…':''}</th>`;
+    }).join('');
+
+    sync.style.display='none';
+    cont.innerHTML = `
+      <div style="font-size:.8rem;color:#888;margin-bottom:.5rem">
+        ❌ Niet ingediend &nbsp; 📥 Ingediend &nbsp; 🔄 Remediering &nbsp; 🏁 Afgerond &nbsp; 🔵 Vrijgesteld &nbsp; — Niet toegewezen
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table style="min-width:500px">
+          <thead><tr><th>Leerling</th>${titelRijen}<th>%</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    sync.style.display='none';
+    cont.innerHTML=`<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}</div>`;
+  }
 }
 
 // ── DEADLINES ─────────────────────────────────────────────────────────────────
