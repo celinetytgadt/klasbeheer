@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.3</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.4</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -658,18 +658,19 @@ async function laadTaken() {
 // ── OVERZICHT ─────────────────────────────────────────────────────────────────
 function vulOverzichtKlassen() {
   const sel = document.getElementById('overzicht-klas');
-  const klassen = db.classroomKlassen || [];
-  // Bewaar huidige selectie
+  const alle = db.classroomKlassen || [];
+  // Enkel klassen tonen die overeenkomen met een portaalgroep
+  const groepNamen = new Set(db.groepen.map(g => g.naam.toLowerCase()));
+  const klassen = alle.filter(k => groepNamen.has(k.naam.toLowerCase()));
+  const tonen = klassen.length ? klassen : alle;
   const cur = sel.value;
   sel.innerHTML = '<option value="">— kies een klas —</option>' +
-    klassen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
-  // Herstel selectie of kies eerste klas automatisch
-  if (cur && klassen.find(k=>k.id===cur)) {
+    tonen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
+  if (cur && tonen.find(k=>k.id===cur)) {
     sel.value = cur;
-  } else if (klassen.length === 1) {
-    sel.value = klassen[0].id;
+  } else if (tonen.length === 1) {
+    sel.value = tonen[0].id;
   }
-  // Als een klas geselecteerd is, laad meteen
   if (sel.value) laadOverzichtTaken();
 }
 
@@ -750,7 +751,7 @@ async function laadOverzichtTaken() {
 
     const ovzVertaal = sub => {
       if (!sub) return null;
-      if (sub.state==='EXCUSED') return {ico:'🔵', label:'Vrijgesteld'};
+      if (sub.state==='EXCUSED') return {ico:'🏁', label:'Afgerond (vrijgesteld)'};
       if (sub.state==='NEW'||sub.state==='CREATED') return {ico:'❌', label:'Niet ingediend'};
       if (sub.state==='TURNED_IN') return {ico:'📥', label:'Ingediend'};
       if (sub.state==='RETURNED') return sub.assignedGrade!=null ? {ico:'🏁', label:'Afgerond'} : {ico:'🔄', label:'Remediering'};
@@ -790,7 +791,7 @@ async function laadOverzichtTaken() {
     sync.style.display='none';
     cont.innerHTML = `
       <div style="font-size:.8rem;color:#888;margin-bottom:.5rem">
-        ❌ Niet ingediend &nbsp; 📥 Ingediend &nbsp; 🔄 Remediering &nbsp; 🏁 Afgerond &nbsp; 🔵 Vrijgesteld &nbsp; — Niet toegewezen
+        ❌ Niet ingediend &nbsp; 📥 Ingediend &nbsp; 🔄 Remediering &nbsp; 🏁 Afgerond (incl. vrijgesteld) &nbsp; — Niet toegewezen
       </div>
       <div class="card" style="overflow-x:auto">
         <table style="min-width:500px">
