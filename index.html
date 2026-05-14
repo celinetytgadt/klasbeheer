@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.6</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.7</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -732,8 +732,13 @@ async function laadOverzichtTaken() {
       localStorage.setItem('lkr_google_uid', me.id);
     }
     sync.textContent='⏳ Taken laden…';
-    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
-    const mijnTaken = (takenData.courseWork||[]).filter(t => t.creatorUserId===window._mijnUserId);
+    let alleTakenRawOvz = [], takenTokenOvz = '';
+    do {
+      const takenDataOvz = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=20&orderBy=dueDate+desc&pageToken=${takenTokenOvz}`);
+      alleTakenRawOvz = alleTakenRawOvz.concat(takenDataOvz.courseWork||[]);
+      takenTokenOvz = takenDataOvz.nextPageToken||'';
+    } while(takenTokenOvz);
+    const mijnTaken = alleTakenRawOvz.filter(t => t.creatorUserId===window._mijnUserId);
     if (!mijnTaken.length) { sync.style.display='none'; cont.innerHTML='<div style="text-align:center;padding:2rem;color:#bbb">Geen taken gevonden.</div>'; return; }
 
     const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`);
