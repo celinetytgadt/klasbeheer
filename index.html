@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.2</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.3</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -534,12 +534,12 @@ async function laadTaken() {
       localStorage.setItem('lkr_google_uid', me.id);
     }
 
-    // Topics ophalen
+    // Topics ophalen (optioneel — geen crash bij 403)
     let topicsMap = {};
     try {
-      const td = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/topics?pageSize=100`);
+      const td = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/topics?pageSize=20`);
       (td.topic||[]).forEach(t => topicsMap[t.topicId] = t.name);
-    } catch(e) {}
+    } catch(e) { /* topics niet beschikbaar — geen probleem */ }
 
     // Taken ophalen
     sync.textContent = '⏳ Taken laden…';
@@ -574,7 +574,7 @@ async function laadTaken() {
 
     // Inzendingen parallel
     const alleSubs = await Promise.all(mijnTaken.map(t =>
-      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=100`)
+      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=20`)
         .then(d => ({ tid: t.id, subs: d.studentSubmissions||[] }))
     ));
     const subMap = {};
@@ -591,6 +591,7 @@ async function laadTaken() {
 
     // Enkel leerlingen met een submission (= taak effectief toegewezen)
 
+    if (!db.vrijstellingen) db.vrijstellingen = {};
     const isVrij = (taakId, userId) => !!((db.vrijstellingen[klasId]||{})[taakId]||{})[userId];
 
     // Enkel lopende taken (minstens 1 toegewezen niet-vrijgestelde leerling niet afgerond)
@@ -598,7 +599,7 @@ async function laadTaken() {
       students.some(s => {
         const st = vertaal(subMap[taak.id]?.[s.userId]);
         if (st === null) return false; // niet toegewezen
-        if (isVrij(taak.id, s.userId)) return false; // vrijgesteld telt als afgerond
+        if (klasId && isVrij(taak.id, s.userId)) return false; // vrijgesteld telt als afgerond
         return st !== 'afgerond';
       })
     );
@@ -623,7 +624,7 @@ async function laadTaken() {
         const status = vertaal(subMap[taak.id]?.[s.userId]);
         if (status === null) return; // niet toegewezen — overslaan
         const naam = uidNaam[s.userId]||'?';
-        if (isVrij(taak.id, s.userId)) { vrijgesteld.push({naam, userId: s.userId}); return; }
+        if (klasId && isVrij(taak.id, s.userId)) { vrijgesteld.push({naam, userId: s.userId}); return; }
         (gr[status]||gr.niet_ingediend).push(naam);
       });
       const tot=(gr.niet_ingediend.length+gr.ingediend.length+gr.remediering.length+gr.afgerond.length);
@@ -658,7 +659,7 @@ async function laadTaken() {
         <div style="margin-top:.4rem;font-size:.78rem;color:#bbb">📡 Live uit Classroom</div>
       </div>`;
     // Sla leerlingen op in cache voor vrijstelling menu
-    window._vrijMenuCache[klasId+'|'+taak.id] = students.filter(s=>vertaal(subMap[taak.id]?.[s.userId])!==null).map(s=>({userId:s.userId,naam:uidNaam[s.userId]||'?'}));
+    if (klasId) window._vrijMenuCache[klasId+'|'+taak.id] = students.filter(s=>vertaal(subMap[taak.id]?.[s.userId])!==null).map(s=>({userId:s.userId,naam:uidNaam[s.userId]||'?'}));
     }).join('');
 
   } catch(e) {
@@ -765,7 +766,7 @@ async function laadOverzichtTaken() {
 
     sync.textContent='⏳ Statussen laden…';
     const alleSubs = await Promise.all(mijnTaken.map(t =>
-      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=100`)
+      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=20`)
         .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
     ));
     const subMap = {};
