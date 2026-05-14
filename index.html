@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.1</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.2</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -591,6 +591,8 @@ async function laadTaken() {
 
     // Enkel leerlingen met een submission (= taak effectief toegewezen)
 
+    const isVrij = (taakId, userId) => !!((db.vrijstellingen[klasId]||{})[taakId]||{})[userId];
+
     // Enkel lopende taken (minstens 1 toegewezen niet-vrijgestelde leerling niet afgerond)
     const lopend = mijnTaken.filter(taak =>
       students.some(s => {
@@ -609,7 +611,6 @@ async function laadTaken() {
       return;
     }
 
-    const isVrij = (taakId, userId) => !!((db.vrijstellingen[klasId]||{})[taakId]||{})[userId];
     const kol = (emo,t,namen,kl) => `<div><div class="col-title">${emo} ${t} (${namen.length})</div>${namen.length ? namen.map(n=>`<span class="lln-tag ${kl}">${n}</span>`).join('') : '<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
 
     cont.innerHTML = lopend.map(taak => {
