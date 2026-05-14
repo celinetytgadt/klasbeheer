@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.9</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.1</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -609,24 +609,8 @@ async function laadTaken() {
       return;
     }
 
-    const vrijgst = (db.vrijstellingen[klasId]||{});
-    const isVrij = (taakId, userId) => !!(vrijgst[taakId]||{})[userId];
-    const togVrij = (taakId, userId, naam) => {
-      if (!db.vrijstellingen[klasId]) db.vrijstellingen[klasId] = {};
-      if (!db.vrijstellingen[klasId][taakId]) db.vrijstellingen[klasId][taakId] = {};
-      db.vrijstellingen[klasId][taakId][userId] = !db.vrijstellingen[klasId][taakId][userId];
-      save(); laadTaken();
-    };
-    const vrijgst = (db.vrijstellingen[klasId]||{});
-    const isVrij = (taakId, userId) => !!(vrijgst[taakId]||{})[userId];
-    const togVrij = (taakId, userId) => {
-      if (!db.vrijstellingen[klasId]) db.vrijstellingen[klasId] = {};
-      if (!db.vrijstellingen[klasId][taakId]) db.vrijstellingen[klasId][taakId] = {};
-      db.vrijstellingen[klasId][taakId][userId] = !db.vrijstellingen[klasId][taakId][userId];
-      save(); laadTaken();
-    };
+    const isVrij = (taakId, userId) => !!((db.vrijstellingen[klasId]||{})[taakId]||{})[userId];
     const kol = (emo,t,namen,kl) => `<div><div class="col-title">${emo} ${t} (${namen.length})</div>${namen.length ? namen.map(n=>`<span class="lln-tag ${kl}">${n}</span>`).join('') : '<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
-    const kolVrij = (namen, studentenMap) => `<div><div class="col-title">🔵 Vrijgesteld (${namen.length})</div>${namen.length ? namen.map(n=>`<span class="lln-tag" style="background:#e8f4fd;border-color:#5b9bd5">${n}<button onclick="togVrij('${klasId}','PLACEHOLDER','PLACEHOLDER2')" title="Vrijstelling opheffen" style="border:none;background:none;cursor:pointer;color:#e24b4a;font-size:.78rem;padding:0 1px">✕</button></span>`).join('') : '<span style="font-size:.8rem;color:#ddd">—</span>'}</div>`;
 
     cont.innerHTML = lopend.map(taak => {
       const dl = taak.dueDate ? `${taak.dueDate.year}-${String(taak.dueDate.month).padStart(2,'0')}-${String(taak.dueDate.day).padStart(2,'0')}` : null;
@@ -668,10 +652,12 @@ async function laadTaken() {
           ${vrijgesteld.length ? `<div><div class="col-title">🔵 Vrijgesteld (${vrijgesteld.length})</div>${vrijgesteld.map(v=>`<span class="lln-tag" style="background:#e8f4fd;border-color:#5b9bd5">${v.naam}<button onclick="togVrijEnHerlaad('${klasId}','${taak.id}','${v.userId}',false)" title="Vrijstelling opheffen" style="border:none;background:none;cursor:pointer;color:#e24b4a;font-size:.78rem;padding:0 1px">✕</button></span>`).join('')}</div>` : ''}
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
-          <button class="btn xs outline" onclick="toonVrijstellingMenu('${klasId}','${taak.id}',${JSON.stringify(students.filter(s=>vertaal(subMap[taak.id]?.[s.userId])!==null).map(s=>({userId:s.userId,naam:uidNaam[s.userId]||'?'})))})">🔵 Vrijstelling instellen</button>
+          <button class="btn xs outline" onclick="toonVrijstellingMenuCached('${klasId}','${taak.id}')">🔵 Vrijstelling instellen</button>
         </div>
         <div style="margin-top:.4rem;font-size:.78rem;color:#bbb">📡 Live uit Classroom</div>
       </div>`;
+    // Sla leerlingen op in cache voor vrijstelling menu
+    window._vrijMenuCache[klasId+'|'+taak.id] = students.filter(s=>vertaal(subMap[taak.id]?.[s.userId])!==null).map(s=>({userId:s.userId,naam:uidNaam[s.userId]||'?'}));
     }).join('');
 
   } catch(e) {
@@ -841,6 +827,12 @@ async function laadOverzichtTaken() {
 }
 
 // ── VRIJSTELLINGEN ───────────────────────────────────────────────────────────────
+// Cache voor vrijstelling menu
+window._vrijMenuCache = {};
+
+function toonVrijstellingMenuCached(klasId, taakId) {
+  toonVrijstellingMenu(klasId, taakId, window._vrijMenuCache[klasId+'|'+taakId]||[]);
+}
 function toonVrijstellingMenu(klasId, taakId, leerlingen) {
   // Maak modal aan als nog niet bestaat
   let modal = document.getElementById('modal-vrijstelling');
