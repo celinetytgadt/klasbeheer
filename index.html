@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.7</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v5.8</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -622,9 +622,8 @@ async function laadTaken() {
       const tot=(gr.niet_ingediend.length+gr.ingediend.length+gr.remediering.length+gr.afgerond.length);
       const klaar=gr.afgerond.length;
       const pct=tot>0?Math.round(klaar/tot*100):0;
-      // Classroom gebruikt base64-encoded IDs in de URL
-      const b64 = s => btoa(s).replace(/=/g, '');
-      const url=`https://classroom.google.com/c/${b64(klasId)}/a/${b64(taak.id)}/details`;
+      // Gebruik de alternateLink van de API zelf — die is altijd correct
+      const url = taak.alternateLink || `https://classroom.google.com/c/${klasId}/a/${taak.id}/details`;
       return `<div class="taak-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
           <div><div style="font-weight:600;font-size:.95rem">${taak.title}</div>
@@ -651,7 +650,12 @@ async function laadTaken() {
 
   } catch(e) {
     sync.style.display = 'none';
-    cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}<br><button class="btn sm outline" style="margin-top:.75rem" onclick="laadTaken()">Opnieuw</button></div>`;
+    if (e.message.includes('401')) {
+      googleToken = null;
+      cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Sessie verlopen.<br><button class="btn sm" style="margin-top:.75rem" onclick="koppelGoogle()">Opnieuw aanmelden</button></div>`;
+    } else {
+      cont.innerHTML = `<div style="text-align:center;padding:2rem;color:#e24b4a">⚠ Fout: ${e.message}<br><button class="btn sm outline" style="margin-top:.75rem" onclick="laadTaken()">Opnieuw proberen</button></div>`;
+    }
   }
 }
 
