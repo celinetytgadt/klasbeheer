@@ -658,9 +658,16 @@ async function laadTaken() {
         </div>
         <div style="margin-top:.4rem;font-size:.78rem;color:#bbb">📡 Live uit Classroom</div>
       </div>`;
-    // Sla leerlingen op in cache voor vrijstelling menu
-    if (klasId) window._vrijMenuCache[klasId+'|'+taak.id] = students.filter(s=>vertaal(subMap[taak.id]?.[s.userId])!==null).map(s=>({userId:s.userId,naam:uidNaam[s.userId]||'?'}));
     }).join('');
+
+  // Vul cache voor vrijstelling menu
+  if (klasId) {
+    lopend.forEach(taak => {
+      window._vrijMenuCache[klasId+'|'+taak.id] = students
+        .filter(s => vertaal(subMap[taak.id]?.[s.userId]) !== null)
+        .map(s => ({userId: s.userId, naam: uidNaam[s.userId]||'?'}));
+    });
+  }
 
   } catch(e) {
     sync.style.display = 'none';
@@ -768,6 +775,7 @@ async function laadOverzichtTaken() {
     const alleSubs = await Promise.all(mijnTaken.map(t =>
       gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=20`)
         .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
+        .catch(() => ({tid:t.id, subs:[]}))
     ));
     const subMap = {};
     alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
