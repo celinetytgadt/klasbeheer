@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.3</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.7</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -203,6 +203,17 @@ tr:last-child td{border-bottom:none}
       <button class="btn sm danger" onclick="ontkoppelGoogle()" style="margin-left:.5rem">Ontkoppelen</button>
     </div>
   </div>
+
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Verborgen taken</h2>
+  <div class="card">
+    <div id="verborgen-lijst"><p style="font-size:.88rem;color:#bbb">Geen verborgen taken.</p></div>
+  </div>
+
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Verborgen taken</h2>
+  <div class="card"><div id="verborgen-lijst"><p style="font-size:.88rem;color:#bbb">Geen verborgen taken.</p></div></div>
+
+  <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Verborgen taken</h2>
+  <div class="card"><div id="verborgen-lijst"><p style="font-size:.88rem;color:#bbb">Geen verborgen taken.</p></div></div>
 
   <h2 style="font-size:1rem;font-weight:600;color:#1e3a5f;margin:1.25rem 0 .75rem">Data</h2>
   <div class="card">
@@ -380,10 +391,11 @@ function laadDb() {
     if (!d.classroomKlassen) d.classroomKlassen = [];
     if (!d.taken) d.taken = [];
     if (!d.vrijstellingen) d.vrijstellingen = {};
+    if (!d.verborgenTaken) d.verborgenTaken = {};
     localStorage.setItem(KEY, JSON.stringify(d));
     return d;
   }
-  return { groepen:[], aanwezigheden:{}, taken:[], classroomKlassen:[], vrijstellingen:{}, mail: {...MAIL_DEFAULT} };
+  return { groepen:[], aanwezigheden:{}, taken:[], classroomKlassen:[], vrijstellingen:{}, verborgenTaken:{}, mail: {...MAIL_DEFAULT} };
 }
 
 let db = laadDb();
@@ -551,9 +563,7 @@ async function laadTaken() {
     } while(takenToken);
 
     // Filter op eigen taken
-    console.log('Alle taken:', alleTaken.length, 'creators:', [...new Set(alleTaken.map(t=>t.creatorUserId))]);
     let mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
-    console.log('Mijn taken na filter:', mijnTaken.length);
     const gefiltered = mijnTaken.length > 0;
 
     if (!mijnTaken.length) {
@@ -662,7 +672,10 @@ async function laadTaken() {
         <div style="display:flex;justify-content:flex-end;margin-top:.5rem">
           <button class="btn xs outline" onclick="toonVrijstellingMenuCached('${klasId}','${taak.id}')">🔵 Vrijstelling instellen</button>
         </div>
-        <div style="margin-top:.4rem;font-size:.78rem;color:#bbb">📡 Live uit Classroom</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem">
+          <span style="font-size:.78rem;color:#bbb">📡 Live uit Classroom</span>
+          <button class="btn xs danger" onclick="verbergTaak('${klasId}','${taak.id}')" title="Taak verbergen uit portaal">🙈 Verbergen</button>
+        </div>
       </div>`;
     }).join('');
 
@@ -842,9 +855,27 @@ async function laadOverzichtTaken() {
   }
 }
 
+// ── VERBORGEN TAKEN ──────────────────────────────────────────────────────────────
+function verbergTaak(klasId, taakId) {
+  if (!confirm('Deze taak verbergen uit het portaal? Je kan dit ongedaan maken via Instellingen → Verborgen taken.')) return;
+  if (!db.verborgenTaken) db.verborgenTaken = {};
+  if (!db.verborgenTaken[klasId]) db.verborgenTaken[klasId] = {};
+  db.verborgenTaken[klasId][taakId] = true;
+  save(); laadTaken();
+}
+
 // ── VRIJSTELLINGEN ───────────────────────────────────────────────────────────────
 // Cache voor vrijstelling menu
 window._vrijMenuCache = {};
+
+// ── VERBORGEN TAKEN ──────────────────────────────────────────────────────────────
+function verbergTaak(klasId, taakId) {
+  if (!confirm('Deze taak verbergen? Je kan dit ongedaan maken via Instellingen → Verborgen taken.')) return;
+  if (!db.verborgenTaken) db.verborgenTaken = {};
+  if (!db.verborgenTaken[klasId]) db.verborgenTaken[klasId] = {};
+  db.verborgenTaken[klasId][taakId] = true;
+  save(); laadTaken();
+}
 
 function toonVrijstellingMenuCached(klasId, taakId) {
   toonVrijstellingMenu(klasId, taakId, window._vrijMenuCache[klasId+'|'+taakId]||[]);
@@ -1081,6 +1112,33 @@ function laadInstellingen() {
   document.getElementById('mail-basis').value=db.mail.basis||'';
   document.getElementById('mail-slot').value=db.mail.slot||'';
   renderOpt();
+  renderVerborgenTaken();
+}
+
+function renderVerborgenTaken() {
+  const cont = document.getElementById('verborgen-lijst');
+  if (!cont) return;
+  if (!db.verborgenTaken) { cont.innerHTML='<p style="font-size:.88rem;color:#bbb">Geen verborgen taken.</p>'; return; }
+  const items = [];
+  Object.entries(db.verborgenTaken).forEach(([klasId, taken]) => {
+    const klasNaam = (db.classroomKlassen||[]).find(k=>k.id===klasId)?.naam || klasId;
+    Object.keys(taken).filter(tid=>taken[tid]).forEach(taakId => {
+      items.push({klasId, taakId, klasNaam});
+    });
+  });
+  if (!items.length) { cont.innerHTML='<p style="font-size:.88rem;color:#bbb">Geen verborgen taken.</p>'; return; }
+  cont.innerHTML = items.map(item =>
+    `<div class="groep-item">
+      <span style="flex:1;font-size:.88rem">${item.klasNaam} — taak ID: ${item.taakId}</span>
+      <button class="btn xs outline" onclick="toonVerborgenTaak('${item.klasId}','${item.taakId}')">↩ Tonen</button>
+    </div>`
+  ).join('');
+}
+
+function toonVerborgenTaak(klasId, taakId) {
+  if (!db.verborgenTaken?.[klasId]) return;
+  delete db.verborgenTaken[klasId][taakId];
+  save(); renderVerborgenTaken();
 }
 function renderOpt() {
   document.getElementById('opt-lijst').innerHTML=(db.mail.opties||[]).map((t,i)=>`<div class="opt-tekst"><span style="font-size:.8rem;color:#888;padding-top:2px;min-width:18px">${i+1}.</span><textarea rows="2" onchange="db.mail.opties[${i}]=this.value">${t}</textarea><button class="btn danger xs" onclick="verwijderOpt(${i})">🗑</button></div>`).join('');
