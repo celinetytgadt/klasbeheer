@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.7</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.8</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -856,14 +856,6 @@ async function laadOverzichtTaken() {
 }
 
 // ── VERBORGEN TAKEN ──────────────────────────────────────────────────────────────
-function verbergTaak(klasId, taakId) {
-  if (!confirm('Deze taak verbergen uit het portaal? Je kan dit ongedaan maken via Instellingen → Verborgen taken.')) return;
-  if (!db.verborgenTaken) db.verborgenTaken = {};
-  if (!db.verborgenTaken[klasId]) db.verborgenTaken[klasId] = {};
-  db.verborgenTaken[klasId][taakId] = true;
-  save(); laadTaken();
-}
-
 // ── VRIJSTELLINGEN ───────────────────────────────────────────────────────────────
 // Cache voor vrijstelling menu
 window._vrijMenuCache = {};
