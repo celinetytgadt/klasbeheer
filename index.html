@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.5</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.3</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -551,7 +551,9 @@ async function laadTaken() {
     } while(takenToken);
 
     // Filter op eigen taken
+    console.log('Alle taken:', alleTaken.length, 'creators:', [...new Set(alleTaken.map(t=>t.creatorUserId))]);
     let mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
+    console.log('Mijn taken na filter:', mijnTaken.length);
     const gefiltered = mijnTaken.length > 0;
 
     if (!mijnTaken.length) {
