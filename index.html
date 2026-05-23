@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.8</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v7.0</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -866,7 +866,15 @@ function verbergTaak(klasId, taakId) {
   if (!db.verborgenTaken) db.verborgenTaken = {};
   if (!db.verborgenTaken[klasId]) db.verborgenTaken[klasId] = {};
   db.verborgenTaken[klasId][taakId] = true;
-  save(); laadTaken();
+  save();
+  // Verwijder kaart uit DOM zonder nieuwe API call
+  const knop = document.querySelector(`button[onclick*="${taakId}"]`);
+  const kaart = knop?.closest('.taak-card');
+  if (kaart) {
+    kaart.style.opacity = '0.3';
+    kaart.style.pointerEvents = 'none';
+    setTimeout(() => kaart.remove(), 400);
+  }
 }
 
 function toonVrijstellingMenuCached(klasId, taakId) {
@@ -907,10 +915,16 @@ function togVrijEnHerlaad(klasId, taakId, userId, waarde) {
   if (!db.vrijstellingen[klasId][taakId]) db.vrijstellingen[klasId][taakId] = {};
   db.vrijstellingen[klasId][taakId][userId] = waarde;
   save();
-  // Herlaad taken na sluiten modal
-  document.getElementById('modal-vrijstelling').addEventListener('click', function h() {
-    laadTaken(); this.removeEventListener('click', h);
-  }, {once: true});
+  // Sluit modal — geen volledige herlaad
+  sluit('modal-vrijstelling');
+  // Toon melding dat wijziging opgeslagen is
+  const cont = document.getElementById('taken-container');
+  const msg = document.createElement('div');
+  msg.className = 'info-bar';
+  msg.textContent = '✓ Vrijstelling opgeslagen. Herlaad de klas om de lijst bij te werken.';
+  msg.style.cssText = 'position:fixed;bottom:1rem;right:1rem;z-index:300;max-width:350px;margin:0';
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 3000);
 }
 
 // ── DEADLINES ─────────────────────────────────────────────────────────────────
