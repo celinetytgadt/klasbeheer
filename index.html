@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.4</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v6.5</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -541,10 +541,14 @@ async function laadTaken() {
       (td.topic||[]).forEach(t => topicsMap[t.topicId] = t.name);
     } catch(e) { /* topics niet beschikbaar — geen probleem */ }
 
-    // Taken ophalen
+    // Taken ophalen — gepagineerd
     sync.textContent = '⏳ Taken laden…';
-    const takenData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=100&orderBy=dueDate+desc`);
-    const alleTaken = takenData.courseWork || [];
+    let alleTaken = [], takenToken = '';
+    do {
+      const takenPagina = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork?pageSize=20&orderBy=dueDate+desc&pageToken=${takenToken}`);
+      alleTaken = alleTaken.concat(takenPagina.courseWork||[]);
+      takenToken = takenPagina.nextPageToken||'';
+    } while(takenToken);
 
     // Filter op eigen taken
     let mijnTaken = alleTaken.filter(t => t.creatorUserId === window._mijnUserId);
