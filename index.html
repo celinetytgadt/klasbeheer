@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v7.1</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v7.2</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -515,9 +515,7 @@ function vulTakenKlassen() {
   }
   sel.innerHTML = '<option value="">— kies een klas —</option>' + tonen.map(k => `<option value="${k.id}">${k.naam}</option>`).join('');
   if (cur) sel.value = cur;
-  // Als token leeg maar was verbonden: haal token op
-  // Token ophalen indien nodig
-if (!googleToken && localStorage.getItem('lkr_google') === '1') koppelGoogle();
+
 }
 
 async function laadTaken() {
@@ -1182,6 +1180,7 @@ function koppelGoogle() {
     google.accounts.oauth2.initTokenClient({ client_id:GKEY, scope:GSCOPE, callback:(r) => {
       _googleBezig = false;
       if (r.error) {
+        _googleBezig = false;
         if (r.error !== 'popup_closed_by_user') alert('Aanmelden mislukt: '+r.error);
         return;
       }
@@ -1215,7 +1214,7 @@ function zetVerbUI(v) {
   document.getElementById('google-aan').style.display=v?'block':'none';
   if (v) document.getElementById('google-naam').textContent='✓ Verbonden als '+(localStorage.getItem('lkr_google_naam')||'Google gebruiker');
 }
-function ontkoppelGoogle(){googleToken=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');zetVerbUI(false);}
+function ontkoppelGoogle(){googleToken=null;_googleBezig=false;window._mijnUserId=null;localStorage.removeItem('lkr_google');localStorage.removeItem('lkr_google_naam');localStorage.removeItem('lkr_google_uid');zetVerbUI(false);}
 
 async function gFetch(url) {
   const r=await fetch(url,{headers:{Authorization:'Bearer '+googleToken}});
