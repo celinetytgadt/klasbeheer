@@ -76,7 +76,7 @@ tr:last-child td{border-bottom:none}
 
 <header>
   <div style="font-size:1.4rem">📚</div>
-  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v7.2</span></h1>
+  <h1>Leerkracht Portaal <span style="font-size:.7rem;opacity:.5;font-weight:400">v7.3</span></h1>
   <div class="spacer"></div>
   <button class="hdr-btn" onclick="openDeadlineModal()">🔔 Deadlines<span id="deadline-badge"></span></button>
   <button class="hdr-btn" onclick="showTab('instellingen',document.querySelector('[data-tab=instellingen]'))" style="margin-left:.5rem">⚙ Instellingen</button>
@@ -585,8 +585,12 @@ async function laadTaken() {
 
     // Roster
     sync.textContent = `⏳ Statussen laden…`;
-    const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=100`);
-    const students = rosterData.students || [];
+    let students = [], rosterToken = '';
+    do {
+      const rosterData = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/students?pageSize=20&pageToken=${rosterToken}`);
+      students = students.concat(rosterData.students||[]);
+      rosterToken = rosterData.nextPageToken||'';
+    } while(rosterToken);
     const uidNaam = {};
     students.forEach(s => uidNaam[s.userId] = s.profile.name.fullName);
 
@@ -793,11 +797,18 @@ async function laadOverzichtTaken() {
     students.forEach(s => uidNaam[s.userId]=s.profile.name.fullName);
 
     sync.textContent='⏳ Statussen laden…';
-    const alleSubs = await Promise.all(mijnTaken.map(t =>
-      gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${t.id}/studentSubmissions?pageSize=20`)
-        .then(d => ({tid:t.id, subs:d.studentSubmissions||[]}))
-        .catch(() => ({tid:t.id, subs:[]}))
-    ));
+    const haalSubsOpOvz = async (taakId) => {
+      let subs = [], token = '';
+      try {
+        do {
+          const d = await gFetch(`https://classroom.googleapis.com/v1/courses/${klasId}/courseWork/${taakId}/studentSubmissions?pageSize=20&pageToken=${token}`);
+          subs = subs.concat(d.studentSubmissions||[]);
+          token = d.nextPageToken||'';
+        } while(token);
+      } catch(e) { /* 403/404 */ }
+      return {tid: taakId, subs};
+    };
+    const alleSubs = await Promise.all(mijnTaken.map(t => haalSubsOpOvz(t.id)));
     const subMap = {};
     alleSubs.forEach(({tid,subs}) => { subMap[tid]={}; subs.forEach(s => subMap[tid][s.userId]=s); });
 
